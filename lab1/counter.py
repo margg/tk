@@ -3,29 +3,30 @@ import sys
 import re
 import codecs
 
-def processFile(filepath):
+
+def find_meta(text, name):
+    pattern = r"<meta[^>]* name=\"" + name + r"\"[^>]* content=\"([^\"]*)\""
+    return re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
+
+def process_file(filepath):
     fp = codecs.open(filepath, 'rU', 'iso-8859-2')
     content = fp.read()
 
-    meta = re.findall(r"(<META [^>]*>)", content, re.DOTALL | re.IGNORECASE)
-    meta.append("<META CONTENT=\"Jacek Czarnecki\" NAME=\"AUTOR\">")
-
-    nameAttr = r"(?P<name>NAME(?:\s*)=(?:\s*)\"AUTOR\")"
-    contentAttr = r"(?P<content>CONTENT(?:\s*)=(?:\s*)\"(?P<autor>[^\"]*)\")"
-    authorPattern1 = re.compile(nameAttr + r"(?P<other>.*)" + contentAttr, re.DOTALL | re.IGNORECASE)
-    authorPattern2 = re.compile(contentAttr + r"(?P<other>.*)" + nameAttr, re.DOTALL | re.IGNORECASE)
-
-    for m in meta:
-        mat = authorPattern1.search(m) or authorPattern2.search(m)
-        if mat:
-            author = mat.group('autor')
-
+    autorzy = find_meta(content, "autor")
+    dzialy = find_meta(content, "dzial")
+    kluczowe = find_meta(content, "kluczowe_.")
 
     fp.close()
+
     print("nazwa pliku: {0}".format(filepath))
-    print("autor:")
-    print("dzial:")
-    print("slowa kluczowe:")
+    for autor in autorzy:
+        print("autor: {0}".format(autor))
+    for dzial in dzialy:
+        print("dzial: {0}".format(dzial))
+    print("slowa kluczowe: "),
+    for klucz in kluczowe:
+        print("{0}, ".format(klucz)),
+    print
     print("liczba zdan:")
     print("liczba skrotow:")
     print("liczba liczb calkowitych z zakresu int:")
@@ -50,4 +51,4 @@ def processFile(filepath):
 #             filePath = os.path.join(root, f)
 #             processFile(filePath)
 
-processFile("1993-01/199301030001.html")
+process_file("1993-01/199301040001.html")
