@@ -5,6 +5,7 @@ import codecs
 
 
 def find_meta(text, name):
+    # dla czytelnosci pomienieta mozliwosc uzycia bialych znakow przed i po [=<>] (\s*)
     pattern = r"<meta[^>]* name=\"" + name + r"\"[^>]* content=\"([^\"]*)\""
     return re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
 
@@ -12,37 +13,37 @@ def process_file(filepath):
     fp = codecs.open(filepath, 'rU', 'iso-8859-2')
     content = fp.read()
 
-    autorzy = find_meta(content, "autor")
-    dzialy = find_meta(content, "dzial")
-    kluczowe = find_meta(content, "kluczowe_.")
+    authors = find_meta(content, "autor")
+    sections = find_meta(content, "dzial")
+    keywords = find_meta(content, "kluczowe_.")
 
-    zdania = []
-
-    skroty = re.findall(r"[ ^]+([a-z]{1,3}\.)[ \n$]+", content, re.IGNORECASE | re.MULTILINE)
+    article = (re.search(r"<p>(.*?)<meta ", content, re.IGNORECASE | re.DOTALL)).group(1)
+    sentences = []
+    abbreviations = set(re.findall(r"[ ^]+([a-z]{1,3}\.)[ \n$]+", article, re.IGNORECASE | re.MULTILINE))
 
 
 
     fp.close()
     print("nazwa pliku: {0}".format(filepath))
     try:
-        for autor in autorzy:
-            print("autor: {0}".format(autor))
+        for author in authors:
+            print("autor: {0}".format(author))
     except UnicodeEncodeError:      # problem przy wypisywaniu polskich znakow
         print "Unicode Encode Error\n"
         pass
 
     try:
-        for dzial in dzialy:
-            print("dzial: {0}".format(dzial))
+        for section in sections:
+            print("dzial: {0}".format(section))
     except UnicodeEncodeError:
         print "Unicode Encode Error\n"
         pass
 
     print("slowa kluczowe: "),
     try:
-        for klucz in kluczowe:
-            if klucz:   # pomin puste slowa kluczowe
-                print("{0},".format(klucz)),
+        for key in keywords:
+            if key:   # pomin puste slowa keywords
+                print("{0},".format(key)),
         print
     except UnicodeEncodeError:
         print "Unicode Encode Error\n"
@@ -50,10 +51,9 @@ def process_file(filepath):
 
     print("liczba zdan:")
 
-    skroty = set(skroty)
-    print("liczba skrotow: {0}\n\t".format(len(skroty))),
-    for s in skroty:
-        print("{0},".format(s)),
+    print("liczba skrotow: {0}\n\t".format(len(abbreviations))),
+    for abb in abbreviations:
+        print("{0},".format(abb)),
     print
     print("liczba liczb calkowitych z zakresu int:")
     print("liczba liczb zmiennoprzecinkowych:")
