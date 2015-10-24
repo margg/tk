@@ -23,9 +23,7 @@ def process_file(filepath):
     abbreviations = set(re.findall(r"(?:^|\s|\b)+([a-z]{1,3}\.)(?:$|\s|\b)+", article, re.IGNORECASE))
     # -32768 - 32767, przed: bialy znak, po: bialy znak lub kropka i bialy znak
     integers = re.findall(
-        r"(\s)((-?)(\d{1,4}|[1-2]\d{4}|31\d{3}|32[1-6]\d{2}|327[1-5]\d|3276[1-7])|-32768)((\s)|\.\s)", article)
-
-
+        r"(\s|^)((-?)(\d{1,4}|[1-2]\d{4}|31\d{3}|32[1-6]\d{2}|327[1-5]\d|3276[1-7])|-32768)((\s)|\.\s|$)", article)
 
     fp.close()
     print("nazwa pliku: {0}".format(filepath))
@@ -86,4 +84,3 @@ for root, dirs, files in tree:
         if f.endswith(".html"):
             filePath = os.path.join(root, f)
             process_file(filePath)
-
