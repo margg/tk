@@ -18,16 +18,21 @@ def process_file(filepath):
     keywords = find_meta(content, "kluczowe_\d+")
 
     article = re.search(r"<p>(.*?)<meta\s", content, re.IGNORECASE | re.DOTALL)
-    article = article.group(1) if article else content
+    article = article.group(1) if article else ""
     sentences = []
     abbreviations = set(re.findall(r"(?:^|\s|\b)+([a-z]{1,3}\.)(?:$|\s|\b)+", article, re.IGNORECASE))
     # -32768 - 32767, przed: bialy znak, po: bialy znak lub kropka i bialy znak
     integers = map(lambda x: x[1], re.findall(
         r"(\s|^)((-?)(\d{1,4}|[1-2]\d{4}|31\d{3}|32[1-6]\d{2}|327[1-5]\d|3276[1-7])|-32768)((\s)|\.(\s|$)|$)", article))
 
-    floats = map(lambda x: x[2], re.findall(r"((\s|^)([1-9]\d*\.\d+(e(\+|-)\d+)?))((\s)|\.(\s|$)|$)",
+    floats = map(lambda x: x[2], re.findall(r"((\s|^)([1-9]\d*\.\d+(e(\+|-)\d+)?))(\s|\.(\s|$)|$)",
                                             article, re.IGNORECASE | re.MULTILINE))
 
+    dates = []
+
+    emails = set(map(lambda x: x[1], re.findall(
+        r"(\b|\s|^)(([a-z0-9]\.?\-?_?\+?)*([a-z0-9])@(([a-z0-9]\-?_?\+?)+(\.([a-z0-9]\-?_?\+?)+)+))(\b|\s|\.(\s|$)|$)",
+        content, re.IGNORECASE)))
 
 
     fp.close()
@@ -74,8 +79,11 @@ def process_file(filepath):
     print
 
     print("liczba dat:")
-    print("liczba adresow email:")
-    print("\n")
+
+    print("liczba adresow email: {0}\n\t".format(len(emails))),
+    for e in emails:
+        print("{0},".format(e)),
+    print
     print("======================================================\n")
 
 
@@ -84,7 +92,6 @@ try:
 except IndexError:
     print("Brak podanej nazwy katalogu")
     sys.exit(0)
-
 
 tree = os.walk(path)
 
