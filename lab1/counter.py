@@ -2,17 +2,16 @@ import os
 import sys
 import re
 import codecs
-from datetime import datetime
 
 
 def find_meta(text, name):
     # dla czytelnosci pomienieta mozliwosc uzycia bialych znakow przed i po [=<>] (\s*)
     pattern = r'<meta[^>]* name="' + name + r'"[^>]* content="([^"]*)"'
-    return re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
+    return re.findall(pattern, text, re.DOTALL | re.IGNORECASE | re.UNICODE)
 
 
 def process_file(filepath):
-    verbose = True
+    verbose = False
 
     fp = codecs.open(filepath, 'rU', 'iso-8859-2')
     content = fp.read()
@@ -21,14 +20,18 @@ def process_file(filepath):
     sections = find_meta(content, "dzial")
     keywords = find_meta(content, "kluczowe_\d+")
 
-    article = re.search(r'<p[^>]*>(.*?)<meta\s', content, re.IGNORECASE | re.DOTALL)
-    article = article.group(1) if article else ""
+    article = re.search(r'<p(?:\s[^>]*)*>(.*?)<meta\s', content, re.IGNORECASE | re.DOTALL | re.UNICODE)
+    article = article.group(1) if article else content
 
-    sentences = re.findall(r'[a-zA-Z0-9\s]*[^\s\.\?!\d><]{4,}(?:(?:[\?\.!]+)|(?:\s*<[^>]*>\s*\n))',
-                           article, re.IGNORECASE | re.DOTALL)
+    # sentences = re.findall(r'[a-zA-Z0-9\s]*[^\s\.\?!\d><]{4,}(?:(?:[\?\.!]+)|(?:\s*<[^>]*>\s*\n))',
+    #                        article, re.IGNORECASE | re.DOTALL | re.UNICODE)
+
+    sentences = map(lambda x: x[1], re.findall(r'(((?<![^.]\s)[A-Z].{4,}?([.|?|!]+))(?=((\s)+([A-Z]|$|<))))',
+                                               article, re.DOTALL | re.UNICODE))
     if verbose:
         for a in sentences:
-            print(u'%s ::::', a)
+            print(a)
+            print "-----"
 
     abbreviations = set(re.findall(r'(?:^|\s|\b)+([a-z]{1,3}\.)(?:$|\s|\b)+', article, re.IGNORECASE))
     # -32768 - 32767, przed: bialy znak, po: bialy znak lub kropka i bialy znak, lub przecinek i bialy znak
@@ -40,13 +43,13 @@ def process_file(filepath):
         r'((\s|^)(([1-9]\d*\.\d+(e(\+|-)\d+)?)|([0]?\.\d+)|([1-9]\d*\.)))(\s|\.(\s|$)|$)',
         article, re.IGNORECASE | re.MULTILINE)))
 
+    dats = re.findall(r'(?:(\d{4})(?P<delim>\.|-|/)(?:(?:(0\d|1[0-2])(?P=delim)([0-2]\d))|(?:(0[13578]|10|12)(?P=delim)(30|31))|(?:(0[469]|11)(?P=delim)(30))))', article)
     dates = set()
-    dates = dates.union(set([":".join([y for y in x if y]) for x in re.findall(
-        r'(?:(\d{4})\.(0\d|1[0-2])\.([0-2]\d))|(?:(\d{4})-(0\d|1[0-2])-([0-2]\d))|(?:(\d{4})/(0\d|1[0-2])/([0-2]\d))',
-        article, re.IGNORECASE | re.MULTILINE)]))
-    dates = dates.union(set([":".join([y for y in x if y][::-1]) for x in re.findall(
-        r'(?:([0-2]\d)\.(0\d|1[0-2])\.(\d{4}))|(?:([0-2]\d)-(0\d|1[0-2])-(\d{4}))|(?:([0-2]\d)/(0\d|1[0-2])/(\d{4}))',
-        article, re.IGNORECASE | re.MULTILINE)]))
+    for d in dats:
+        dates = dates.union({(":".join([d[0], d[2] or d[4] or d[6], d[3] or d[5] or d[7]]))})
+    dats = re.findall(r'(?:(?:(?:([0-2]\d)(?P<delim>\.|-|/)(0\d|1[0-2]))|(?:(30|31)(?P=delim)(0[13578]|10|12))|(?:(30)(?P=delim)(0[469]|11)))(?P=delim)(\d{4}))', article)
+    for d in dats:
+        dates = dates.union({":".join([d[7], d[2] or d[4] or d[6], d[0] or d[3] or d[5]])})
     if verbose:
         print(dates)
 
@@ -55,62 +58,54 @@ def process_file(filepath):
         content, re.IGNORECASE)))
 
     fp.close()
-    print("nazwa pliku: {0}".format(filepath))
-    try:
-        for author in authors:
-            print("autor: {0}".format(author))
-    except UnicodeEncodeError:  # problem przy wypisywaniu polskich znakow
-        print "Unicode Encode Error\n"
-        pass
+    print(u"nazwa pliku: {0}".format(filepath))
+    for author in authors:
+        print(u"autor: {0}".format(author))
 
-    try:
-        for section in sections:
-            print("dzial: {0}".format(section))
-    except UnicodeEncodeError:
-        print "Unicode Encode Error\n"
-        pass
+    for section in sections:
+        print(u"dzial: {0}".format(section))
 
     print("slowa kluczowe: "),
-    try:
-        for key in keywords:
-            if key:  # pomin puste slowa kluczowe
-                print("{0},".format(key)),
-        print
-    except UnicodeEncodeError:
-        print "Unicode Encode Error\n"
-        pass
+    for key in keywords:
+        if key:  # pomin puste slowa kluczowe
+            print(u"{0},".format(key)),
+    print
 
     print("liczba zdan: %s" % len(sentences))
 
-    print("liczba roznych skrotow: {0}\n\t".format(len(abbreviations))),
+    print("liczba roznych skrotow: {0}".format(len(abbreviations)))
     if verbose:
-        for abb in abbreviations:
-            print("{0},".format(abb)),
-        print
+        print("\t")
+    for abb in abbreviations:
+        print(u"{0},".format(abb)),
+    print
 
-    print("liczba roznych liczb calkowitych z zakresu int: {0}\n\t".format(len(integers))),
+    print("liczba roznych liczb calkowitych z zakresu int: {0}".format(len(integers)))
     if verbose:
-        for i in integers:
-            print("{0},".format(i)),
-        print
+        print("\t")
+    for i in integers:
+        print("{0},".format(i)),
+    print
 
-    print("liczba roznych liczb zmiennoprzecinkowych: {0}\n\t".format(len(floats))),
+    print("liczba roznych liczb zmiennoprzecinkowych: {0}".format(len(floats)))
     if verbose:
-        for f in floats:
-            print("{0},".format(f)),
-        print
+        print("\t")
+    for f in floats:
+        print("{0},".format(f)),
+    print
 
     print("liczba roznych dat: {0}".format(len(dates)))
     if verbose:
         for d in dates:
             print("\t%s" % d),
-        print
+    print
 
-    print("liczba roznych adresow email: {0}\n\t".format(len(emails))),
+    print("liczba roznych adresow email: {0}".format(len(emails)))
     if verbose:
-        for e in emails:
-            print("{0},".format(e)),
-        print
+        print("\t")
+    for e in emails:
+        print("{0},".format(e)),
+    print
     print("======================================================\n")
 
 
