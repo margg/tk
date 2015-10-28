@@ -26,7 +26,7 @@ def process_file(filepath):
     # sentences = re.findall(r'[a-zA-Z0-9\s]*[^\s\.\?!\d><]{4,}(?:(?:[\?\.!]+)|(?:\s*<[^>]*>\s*\n))',
     #                        article, re.IGNORECASE | re.DOTALL | re.UNICODE)
 
-    sentences = map(lambda x: x[1], re.findall(r'(((?<![^.]\s)[A-Z].{4,}?([.|?|!]+))(?=((\s)+([A-Z]|$|<))))',
+    sentences = map(lambda x: x[1], re.findall(r'(((?<![^.?!]\s)[A-Z0-9].{4,}?([.|?|!]+))(?=((\s)+([A-Z]|$|<))))',
                                                article, re.DOTALL | re.UNICODE))
     if verbose:
         for a in sentences:
