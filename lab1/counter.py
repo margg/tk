@@ -21,26 +21,23 @@ def process_file(filepath):
     keywords = find_meta(content, "kluczowe_\d+")
 
     article = re.search(r'<p(?:\s[^>]*)*>(.*?)<meta\s', content, re.IGNORECASE | re.DOTALL | re.UNICODE)
-    article = article.group(1) if article else content
+    article = article.group(1) if article else ""
 
-    # sentences = re.findall(r'[a-zA-Z0-9\s]*[^\s\.\?!\d><]{4,}(?:(?:[\?\.!]+)|(?:\s*<[^>]*>\s*\n))',
-    #                        article, re.IGNORECASE | re.DOTALL | re.UNICODE)
-
-    sentences = map(lambda x: x[1], re.findall(r'(((?<![^.?!]\s)[A-Z0-9].{4,}?([.|?|!]+))(?=((\s)+([A-Z]|$|<))))',
+    sentences = map(lambda x: x[1], re.findall(r'(((?<![^.?!]\s)[A-Z0-9].{4,}?([.?!]+|\n))(?=((\s)+([A-Z]|$|<))))',
                                                article, re.DOTALL | re.UNICODE))
     if verbose:
         for a in sentences:
             print(a)
             print "-----"
 
-    abbreviations = set(re.findall(r'(?:^|\s|\b)+([a-z]{1,3}\.)(?:$|\s|\b)+', article, re.IGNORECASE))
+    abbreviations = set(re.findall(r'(?:^|\s|\b)+([a-z]{1,3}\.)(?=$|\s|\b)', article, re.IGNORECASE))
     # -32768 - 32767, przed: bialy znak, po: bialy znak lub kropka i bialy znak, lub przecinek i bialy znak
     integers = set(map(lambda x: x[1], re.findall(
-        r'(\s|^)((-?)(\d{1,4}|[1-2]\d{4}|3[01]\d{3}|32[1-6]\d{2}|327[0-5]\d|3276[0-7])|-32768)((\s)|(,\s)|\.(\s|$)|$)',
+        r'(\s|^)((-?)(\d{1,4}|[1-2]\d{4}|3[01]\d{3}|32[1-6]\d{2}|327[0-5]\d|3276[0-7])|-32768)(?=(\s)|(,\s)|\.(\s|$)|$)',
         article)))
 
     floats = set(map(lambda x: x[2], re.findall(
-        r'((\s|^)(([1-9]\d*\.\d+(e(\+|-)\d+)?)|([0]?\.\d+)|([1-9]\d*\.)))(\s|\.(\s|$)|$)',
+        r'((\s|^)(([1-9]\d*\.\d+(e(\+|-)\d+)?)|([0]?\.\d+)|([1-9]\d*\.)))(?=\s|\.(\s|$)|$)',
         article, re.IGNORECASE | re.MULTILINE)))
 
     dats = re.findall(r'(?:(\d{4})(?P<delim>\.|-|/)(?:(?:(0\d|1[0-2])(?P=delim)([0-2]\d))|(?:(0[13578]|10|12)(?P=delim)(30|31))|(?:(0[469]|11)(?P=delim)(30))))', article)
@@ -122,3 +119,5 @@ for root, dirs, files in tree:
         if f.endswith(".html"):
             filePath = os.path.join(root, f)
             process_file(filePath)
+
+process_file("samples.txt")
