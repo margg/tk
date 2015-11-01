@@ -1,11 +1,16 @@
 class Node(object):
     def __str__(self):
-        return self.printTree()
+        return self.print_tree()
 
 
 class Name(Node):
     def __init__(self, name):
         self.name = name
+
+
+class Operator(Node):
+    def __init__(self, op):
+        self.op = op
 
 
 class Program(Node):
@@ -45,9 +50,9 @@ class PrintInstr(Instruction):
 
 
 class LabeledInstr(Instruction):
-    def __init__(self, name, instruction):
+    def __init__(self, label, instruction):
         super(LabeledInstr, self).__init__()
-        self.name = name
+        self.label = label
         self.instruction = instruction
 
 
@@ -62,21 +67,15 @@ class IfInstr(Instruction):
     def __init__(self, condition, body, else_body):
         super(IfInstr, self).__init__()
         self.condition = condition
-        self.body = []
-        self.else_body = []
-        if body:
-            self.body.extend(body)
-        if else_body:
-            self.else_body.extend(else_body)
+        self.body = body
+        self.else_body = else_body
 
 
 class WhileInstr(Instruction):
     def __init__(self, condition, body):
         super(WhileInstr, self).__init__()
         self.condition = condition
-        self.body = []
-        if body:
-            self.body.extend(body)
+        self.body = body
 
 
 class RepeatInstr(Instruction):

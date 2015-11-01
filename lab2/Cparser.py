@@ -41,10 +41,13 @@ class Cparser(object):
     def p_instruction_list(self, p):
         """instruction_list : instruction_list instruction_item
                             | """
-        try:
-            p[0] = list(p[1])
-            p[0].append(p[2])
-        except IndexError:
+        if len(p) == 3:
+            p[0] = list(p[1]) if p[1] else []
+            if isinstance(p[2], list):
+                p[0].extend(p[2])
+            else:
+                p[0].append(p[2])
+        else:
             p[0] = []
 
     def p_instruction_item(self, p):
@@ -56,25 +59,22 @@ class Cparser(object):
     def p_declarations(self, p):
         """declarations : declarations declaration
                         | """
-        try:
-            p[0] = list(p[1])
+        if len(p) == 3:
+            p[0] = list(p[1]) if p[1] else []
             p[0].append(p[2])
-        except IndexError:
+        else:
             p[0] = []
 
     def p_declaration(self, p):
         """declaration : TYPE inits ';'
                        | error ';' """
-        try:
-            p[3]
-            p[0] = ast.Declaration(p[1], p[2])
-        except IndexError:
-            p[0] = p[1]
+        if len(p) == 4:
+            p[0] = ast.Declaration(ast.Name(p[1]), p[2])
 
     def p_inits(self, p):
         """inits : inits ',' init
                  | init """
-        if isinstance(p[1], list):
+        if len(p) == 4:
             p[0] = list(p[1])
             p[0].append(p[3])
         else:
@@ -82,20 +82,20 @@ class Cparser(object):
 
     def p_init(self, p):
         """init : ID '=' expression """
-        p[0] = ast.Initializator(p[1], p[3])
+        p[0] = ast.Initializator(ast.Name(p[1]), p[3])
 
     def p_instructions_opt(self, p):
         """instructions_opt : instructions
                             | """
-        try:
+        if len(p) == 2:
             p[0] = list(p[1])
-        except IndexError:
+        else:
             p[0] = []
 
     def p_instructions(self, p):
         """instructions : instructions instruction
                         | instruction """
-        if isinstance(p[1], list):
+        if len(p) == 3:
             p[0] = list(p[1])
             p[0].append(p[2])
         else:
@@ -122,22 +122,19 @@ class Cparser(object):
 
     def p_labeled_instr(self, p):
         """labeled_instr : ID ':' instruction """
-        p[0] = ast.LabeledInstr(p[1], p[3])
+        p[0] = ast.LabeledInstr(ast.Name(p[1]), p[3])
 
     def p_assignment(self, p):
         """assignment : ID '=' expression ';' """
-        p[0] = ast.Assignment(p[1], p[3])
+        p[0] = ast.Assignment(ast.Name(p[1]), p[3])
 
     def p_choice_instr(self, p):
         """choice_instr : IF '(' condition ')' instruction  %prec IFX
                         | IF '(' condition ')' instruction ELSE instruction
                         | IF '(' error ')' instruction  %prec IFX
                         | IF '(' error ')' instruction ELSE instruction """
-        try:
-            p[7]
-            p[0] = ast.IfInstr(p[3], p[5], p[7])
-        except IndexError:
-            p[0] = ast.IfInstr(p[3], p[5], [])
+
+        p[0] = ast.IfInstr(p[3], [p[5]], None if len(p) < 8 else p[7])
 
     def p_while_instr(self, p):
         """while_instr : WHILE '(' condition ')' instruction
@@ -167,10 +164,10 @@ class Cparser(object):
     def p_compound_instr_body(self, p):
         """compound_instr_body : compound_instr_body compound_instr_item
                                | """
-        try:
+        if len(p) == 3:
             p[0] = list(p[1])
             p[0].append(p[2])
-        except IndexError:
+        else:
             p[0] = []
 
     def p_compound_instr_item(self, p):
@@ -183,10 +180,22 @@ class Cparser(object):
         p[0] = p[1]
 
     def p_const(self, p):
-        """const : INTEGER
-                 | FLOAT
-                 | STRING"""
+        """const : integer
+                 | float
+                 | string"""
         p[0] = p[1]
+
+    def p_integer(self, p):
+        """integer : INTEGER"""
+        p[0] = ast.Integer(p[1])
+
+    def p_float(self, p):
+        """float : FLOAT"""
+        p[0] = ast.Float(p[1])
+
+    def p_string(self, p):
+        """string : STRING"""
+        p[0] = ast.String(p[1])
 
     def p_expression(self, p):
         """expression : const
@@ -213,31 +222,35 @@ class Cparser(object):
                       | '(' error ')'
                       | ID '(' expr_list_or_empty ')'
                       | ID '(' error ')' """
-        if p[1] == '(':
+        if len(p) == 2:
+            if isinstance(p[1], ast.Const):
+                p[0] = p[1]
+            else:
+                p[0] = ast.Name(p[1])
+        elif p[1] == '(':
             p[0] = ast.EnclosedExpr(p[2])
         elif p[2] == '(':
-            p[0] = ast.MethodCallExpr(p[1], p[3])
+            p[0] = ast.MethodCallExpr(ast.Name(p[1]), p[3])
         elif isinstance(p[1], ast.Const):
-            p[0] = ast.Const(p[1])
+            p[0] = p[1]
         else:
-            try:
-                p[3]
-                p[0] = ast.BinaryExpr(p[1], p[2], p[3])
-            except IndexError:
+            if len(p) == 4:
+                p[0] = ast.BinaryExpr(p[1], ast.Operator(p[2]), p[3])
+            else:
                 p[0] = ast.Name(p[1])
 
     def p_expr_list_or_empty(self, p):
         """expr_list_or_empty : expr_list
                               | """
-        try:
+        if len(p) == 2:
             p[0] = list(p[1])
-        except IndexError:
+        else:
             p[0] = []
 
     def p_expr_list(self, p):
         """expr_list : expr_list ',' expression
                      | expression """
-        if isinstance(p[1], list):
+        if len(p) == 4:
             p[0] = list(p[1])
             p[0].append(p[3])
         else:
@@ -246,15 +259,15 @@ class Cparser(object):
     def p_fundefs_opt(self, p):
         """fundefs_opt : fundefs
                        | """
-        try:
+        if len(p) == 2:
             p[0] = list(p[1])
-        except IndexError:
+        else:
             p[0] = []
 
     def p_fundefs(self, p):
         """fundefs : fundefs fundef
                    | fundef """
-        if isinstance(p[1], list):
+        if len(p) == 3:
             p[0] = list(p[1])
             p[0].append(p[2])
         else:
@@ -262,20 +275,20 @@ class Cparser(object):
 
     def p_fundef(self, p):
         """fundef : TYPE ID '(' args_list_or_empty ')' compound_instr """
-        p[0] = ast.FunctionDef(p[1], p[2], p[4], p[6])
+        p[0] = ast.FunctionDef(ast.Name(p[1]), ast.Name(p[2]), p[4], p[6])
 
     def p_args_list_or_empty(self, p):
         """args_list_or_empty : args_list
                               | """
-        try:
+        if len(p) == 2:
             p[0] = list(p[1])
-        except IndexError:
+        else:
             p[0] = []
 
     def p_args_list(self, p):
         """args_list : args_list ',' arg
                      | arg """
-        if isinstance(p[1], list):
+        if len(p) == 4:
             p[0] = list(p[1])
             p[0].append(p[3])
         else:
@@ -283,5 +296,5 @@ class Cparser(object):
 
     def p_arg(self, p):
         """arg : TYPE ID """
-        p[0] = ast.Argument(p[1], p[2])
+        p[0] = ast.Argument(ast.Name(p[1]), ast.Name(p[2]))
 
