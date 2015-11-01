@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from scanner import Scanner
-import AST
+import ast
 
 
 class Cparser(object):
@@ -26,7 +26,6 @@ class Cparser(object):
         ("left", '*', '/', '%'),
     )
 
-
     def p_error(self, p):
         if p:
             print("Syntax error at line {0}, column {1}: LexToken({2}, '{3}')".format(p.lineno,
@@ -35,39 +34,72 @@ class Cparser(object):
         else:
             print("Unexpected end of input")
 
-
     def p_program(self, p):
-        """program : declarations fundefs_opt instructions_opt"""
+        """program : instruction_list"""
+        p[0] = ast.Program(p[1])
 
+    def p_instruction_list(self, p):
+        """instruction_list : instruction_list instruction_item
+                            | """
+        try:
+            p[0] = list(p[1])
+            p[0].append(p[2])
+        except IndexError:
+            p[0] = []
+
+    def p_instruction_item(self, p):
+        """instruction_item : declarations
+                            | fundefs_opt
+                            | instructions_opt"""
+        p[0] = p[1]
 
     def p_declarations(self, p):
         """declarations : declarations declaration
                         | """
-
+        try:
+            p[0] = list(p[1])
+            p[0].append(p[2])
+        except IndexError:
+            p[0] = []
 
     def p_declaration(self, p):
         """declaration : TYPE inits ';'
                        | error ';' """
-
+        try:
+            p[3]
+            p[0] = ast.Declaration(p[1], p[2])
+        except IndexError:
+            p[0] = p[1]
 
     def p_inits(self, p):
         """inits : inits ',' init
                  | init """
-
+        if isinstance(p[1], list):
+            p[0] = list(p[1])
+            p[0].append(p[3])
+        else:
+            p[0] = [p[1]]
 
     def p_init(self, p):
         """init : ID '=' expression """
-
+        p[0] = ast.Initializator(p[1], p[3])
 
     def p_instructions_opt(self, p):
         """instructions_opt : instructions
                             | """
-
+        try:
+            p[0] = list(p[1])
+        except IndexError:
+            p[0] = []
 
     def p_instructions(self, p):
         """instructions : instructions instruction
                         | instruction """
-
+        if isinstance(p[1], list):
+            p[0] = list(p[1])
+            p[0].append(p[2])
+        else:
+            p[0] = [p[1]]
 
     def p_instruction(self, p):
         """instruction : print_instr
@@ -81,62 +113,80 @@ class Cparser(object):
                        | continue_instr
                        | compound_instr
                        | expression ';' """
-
+        p[0] = p[1]
 
     def p_print_instr(self, p):
         """print_instr : PRINT expr_list ';'
                        | PRINT error ';' """
-
+        p[0] = ast.PrintInstr(p[2])
 
     def p_labeled_instr(self, p):
         """labeled_instr : ID ':' instruction """
-
+        p[0] = ast.LabeledInstr(p[1], p[3])
 
     def p_assignment(self, p):
         """assignment : ID '=' expression ';' """
-
+        p[0] = ast.Assignment(p[1], p[3])
 
     def p_choice_instr(self, p):
         """choice_instr : IF '(' condition ')' instruction  %prec IFX
                         | IF '(' condition ')' instruction ELSE instruction
                         | IF '(' error ')' instruction  %prec IFX
                         | IF '(' error ')' instruction ELSE instruction """
-
+        try:
+            p[7]
+            p[0] = ast.IfInstr(p[3], p[5], p[7])
+        except IndexError:
+            p[0] = ast.IfInstr(p[3], p[5], [])
 
     def p_while_instr(self, p):
         """while_instr : WHILE '(' condition ')' instruction
                        | WHILE '(' error ')' instruction """
-
+        p[0] = ast.WhileInstr(p[3], p[5])
 
     def p_repeat_instr(self, p):
         """repeat_instr : REPEAT instructions UNTIL condition ';' """
-
+        p[0] = ast.RepeatInstr(p[2], p[4])
 
     def p_return_instr(self, p):
         """return_instr : RETURN expression ';' """
-
+        p[0] = ast.ReturnInstr(p[2])
 
     def p_continue_instr(self, p):
         """continue_instr : CONTINUE ';' """
-
+        p[0] = ast.ContinueInstr()
 
     def p_break_instr(self, p):
         """break_instr : BREAK ';' """
-
+        p[0] = ast.BreakInstr()
 
     def p_compound_instr(self, p):
-        """compound_instr : '{' declarations instructions_opt '}' """
+        """compound_instr : '{' compound_instr_body '}' """
+        p[0] = p[2]
 
+    def p_compound_instr_body(self, p):
+        """compound_instr_body : compound_instr_body compound_instr_item
+                               | """
+        try:
+            p[0] = list(p[1])
+            p[0].append(p[2])
+        except IndexError:
+            p[0] = []
+
+    def p_compound_instr_item(self, p):
+        """compound_instr_item : declarations
+                               | instructions_opt """
+        p[0] = p[1]
 
     def p_condition(self, p):
         """condition : expression"""
-
+        p[0] = p[1]
 
     def p_const(self, p):
         """const : INTEGER
                  | FLOAT
                  | STRING"""
-
+        p[0] = p[1]
 
     def p_expression(self, p):
         """expression : const
@@ -163,39 +213,75 @@ class Cparser(object):
                       | '(' error ')'
                       | ID '(' expr_list_or_empty ')'
                       | ID '(' error ')' """
-
+        if p[1] == '(':
+            p[0] = ast.EnclosedExpr(p[2])
+        elif p[2] == '(':
+            p[0] = ast.MethodCallExpr(p[1], p[3])
+        elif isinstance(p[1], ast.Const):
+            p[0] = ast.Const(p[1])
+        else:
+            try:
+                p[3]
+                p[0] = ast.BinaryExpr(p[1], p[2], p[3])
+            except IndexError:
+                p[0] = ast.Name(p[1])
 
     def p_expr_list_or_empty(self, p):
         """expr_list_or_empty : expr_list
                               | """
-
+        try:
+            p[0] = list(p[1])
+        except IndexError:
+            p[0] = []
 
     def p_expr_list(self, p):
         """expr_list : expr_list ',' expression
                      | expression """
-
+        if isinstance(p[1], list):
+            p[0] = list(p[1])
+            p[0].append(p[3])
+        else:
+            p[0] = [p[1]]
 
     def p_fundefs_opt(self, p):
         """fundefs_opt : fundefs
                        | """
+        try:
+            p[0] = list(p[1])
+        except IndexError:
+            p[0] = []
 
     def p_fundefs(self, p):
         """fundefs : fundefs fundef
                    | fundef """
-
+        if isinstance(p[1], list):
+            p[0] = list(p[1])
+            p[0].append(p[2])
+        else:
+            p[0] = [p[1]]
 
     def p_fundef(self, p):
         """fundef : TYPE ID '(' args_list_or_empty ')' compound_instr """
-
+        p[0] = ast.FunctionDef(p[1], p[2], p[4], p[6])
 
     def p_args_list_or_empty(self, p):
         """args_list_or_empty : args_list
                               | """
+        try:
+            p[0] = list(p[1])
+        except IndexError:
+            p[0] = []
 
     def p_args_list(self, p):
         """args_list : args_list ',' arg
                      | arg """
+        if isinstance(p[1], list):
+            p[0] = list(p[1])
+            p[0].append(p[3])
+        else:
+            p[0] = [p[1]]
 
     def p_arg(self, p):
         """arg : TYPE ID """
+        p[0] = ast.Argument(p[1], p[2])
 

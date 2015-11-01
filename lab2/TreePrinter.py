@@ -1,4 +1,4 @@
-import AST
+import ast
 
 
 def addToClass(cls):
@@ -11,12 +11,12 @@ def addToClass(cls):
 
 class TreePrinter:
 
-    @addToClass(AST.Node)
+    @addToClass(ast.Node)
     def printTree(self):
         raise Exception("printTree not defined in class " + self.__class__.__name__)
 
 
-    @addToClass(AST.BinExpr)
+    @addToClass(ast.BinExpr)
     def printTree(self):
         pass
         # ...
