@@ -30,7 +30,7 @@ class Declaration(Node):
             raise SyntaxError
 
 
-class Initializator(Node):
+class Initializer(Node):
     def __init__(self, name, expression):
         self.name = name
         self.expression = expression
@@ -157,14 +157,22 @@ class FunctionDef(Node):
         self.return_type = return_type
         self.name = name
         self.args = []
-        self.body = []
+        self.body = body
         if args:
             self.args.extend(args)
-        if body:
-            self.body.extend(body)
 
 
 class Argument(Node):
     def __init__(self, arg_type, name):
         self.arg_type = arg_type
         self.name = name
+
+
+class CompoundExpr(Node):
+    def __init__(self, declarations, fundefs):
+        self.declarations = []
+        self.fundefs = []
+        if declarations:
+            self.declarations.extend(declarations)
+        if fundefs:
+            self.fundefs.extend(fundefs)

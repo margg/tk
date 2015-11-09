@@ -35,26 +35,26 @@ class Cparser(object):
             print("Unexpected end of input")
 
     def p_program(self, p):
-        """program :  declarations fundefs_opt instructions_opt"""
-        p[0] = ast.Program(p[1] + p[2] + p[3])
+        """program :  instruction_list"""
+        p[0] = ast.Program(p[1])
 
-    # def p_instruction_list(self, p):
-    #     """instruction_list : instruction_list instruction_item
-    #                         | """
-    #     if len(p) == 3:
-    #         p[0] = list(p[1]) if p[1] else []
-    #         if isinstance(p[2], list):
-    #             p[0].extend(p[2])
-    #         else:
-    #             p[0].append(p[2])
-    #     else:
-    #         p[0] = []
-    #
-    # def p_instruction_item(self, p):
-    #     """instruction_item : declarations
-    #                         | fundefs_opt
-    #                         | instructions_opt"""
-    #     p[0] = p[1]
+    def p_instruction_list(self, p):
+        """instruction_list : instruction_list instruction_item
+                            | """
+        if len(p) == 3:
+            p[0] = list(p[1]) if p[1] else []
+            if isinstance(p[2], list):
+                p[0].extend(p[2])
+            else:
+                p[0].append(p[2])
+        else:
+            p[0] = []
+
+    def p_instruction_item(self, p):
+        """instruction_item : declaration
+                            | fundef
+                            | instruction"""
+        p[0] = p[1]
 
     def p_declarations(self, p):
         """declarations : declarations declaration
@@ -82,7 +82,7 @@ class Cparser(object):
 
     def p_init(self, p):
         """init : ID '=' expression """
-        p[0] = ast.Initializator(ast.Name(p[1]), p[3])
+        p[0] = ast.Initializer(ast.Name(p[1]), p[3])
 
     def p_instructions_opt(self, p):
         """instructions_opt : instructions
@@ -134,7 +134,7 @@ class Cparser(object):
                         | IF '(' error ')' instruction  %prec IFX
                         | IF '(' error ')' instruction ELSE instruction """
 
-        p[0] = ast.IfInstr(p[3], [p[5]], None if len(p) < 8 else p[7])
+        p[0] = ast.IfInstr(p[3], p[5], None if len(p) < 8 else p[7])
 
     def p_while_instr(self, p):
         """while_instr : WHILE '(' condition ')' instruction
@@ -159,21 +159,7 @@ class Cparser(object):
 
     def p_compound_instr(self, p):
         """compound_instr : '{' declarations instructions '}' """
-        p[0] = p[2] + p[3]
-
-    # def p_compound_instr_body(self, p):
-    #     """compound_instr_body : compound_instr_body compound_instr_item
-    #                            | """
-    #     if len(p) == 3:
-    #         p[0] = list(p[1])
-    #         p[0].append(p[2])
-    #     else:
-    #         p[0] = []
-    #
-    # def p_compound_instr_item(self, p):
-    #     """compound_instr_item : declarations
-    #                            | instructions_opt """
-    #     p[0] = p[1]
+        p[0] = ast.CompoundExpr(p[2], p[3])
 
     def p_condition(self, p):
         """condition : expression"""
@@ -231,13 +217,8 @@ class Cparser(object):
             p[0] = ast.EnclosedExpr(p[2])
         elif p[2] == '(':
             p[0] = ast.MethodCallExpr(ast.Name(p[1]), p[3])
-        elif isinstance(p[1], ast.Const):
-            p[0] = p[1]
         else:
-            if len(p) == 4:
-                p[0] = ast.BinaryExpr(p[1], ast.Operator(p[2]), p[3])
-            else:
-                p[0] = ast.Name(p[1])
+            p[0] = ast.BinaryExpr(p[1], ast.Operator(p[2]), p[3])
 
     def p_expr_list_or_empty(self, p):
         """expr_list_or_empty : expr_list

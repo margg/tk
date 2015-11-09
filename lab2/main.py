@@ -18,4 +18,4 @@ if __name__ == '__main__':
     text = file.read()
     ast = parser.parse(text, lexer=Cparser.scanner, debug=True)
     printer = TreePrinter.TreePrinter()
-    ast.print_tree()
+    print ast.print_tree()

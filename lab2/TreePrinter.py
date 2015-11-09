@@ -36,13 +36,9 @@ class TreePrinter:
             res += i.print_tree()
         return res
 
-    @addToClass(ast.Initializator)
+    @addToClass(ast.Initializer)
     def print_tree(self):
         return self.name.print_tree() + "=" + self.expression.print_tree()
-
-    # @addToClass(ast.Instruction)
-    # def print_tree(self):
-    #     pass
 
     @addToClass(ast.PrintInstr)
     def print_tree(self):
@@ -62,19 +58,15 @@ class TreePrinter:
     @addToClass(ast.IfInstr)
     def print_tree(self):
         res = "if (" + self.condition.print_tree() + ") "
-        for i in self.body:
-            res += i.print_tree()
+        res += self.body.print_tree()
         if self.else_body:
-            res += "else "
-            for i in self.else_body:
-                res += i.print_tree()
+            res += "else " + self.else_body.print_tree()
         return res
 
     @addToClass(ast.WhileInstr)
     def print_tree(self):
         res = "while (" + self.condition.print_tree() + ")"
-        for i in self.body:
-            res += i.print_tree()
+        res += self.body.print_tree()
         return res
 
     @addToClass(ast.RepeatInstr)
@@ -97,10 +89,6 @@ class TreePrinter:
     @addToClass(ast.BreakInstr)
     def print_tree(self):
         return "break;"
-
-    # @addToClass(ast.Expression)
-    # def print_tree(self):
-    #     pass
 
     @addToClass(ast.Const)
     def print_tree(self):
@@ -138,11 +126,19 @@ class TreePrinter:
         res = self.return_type.print_tree() + " " + self.name.print_tree() + "("
         for a in self.args:
             res += a.print_tree() + ", "
-        res += ") {"
-        for i in self.body:
-            res += i.print_tree()
-        return res + "}"
+        res += ")"
+        res += self.body.print_tree()
+        return res
 
     @addToClass(ast.Argument)
     def print_tree(self):
         return self.arg_type.print_tree() + " " + self.name.print_tree()
+
+    @addToClass(ast.CompoundExpr)
+    def print_tree(self):
+        res = "{"
+        for d in self.declarations:
+            res += d.print_tree()
+        for f in self.fundefs:
+            res += f.print_tree()
+        return res + "}"
