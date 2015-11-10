@@ -43,10 +43,7 @@ class Cparser(object):
                             | """
         if len(p) == 3:
             p[0] = list(p[1]) if p[1] else []
-            if isinstance(p[2], list):
-                p[0].extend(p[2])
-            else:
-                p[0].append(p[2])
+            p[0].append(p[2])
         else:
             p[0] = []
 
@@ -133,7 +130,6 @@ class Cparser(object):
                         | IF '(' condition ')' instruction ELSE instruction
                         | IF '(' error ')' instruction  %prec IFX
                         | IF '(' error ')' instruction ELSE instruction """
-
         p[0] = AST.IfInstr(p[3], p[5], None if len(p) < 8 else p[7])
 
     def p_while_instr(self, p):
@@ -159,7 +155,7 @@ class Cparser(object):
 
     def p_compound_instr(self, p):
         """compound_instr : '{' declarations instructions '}' """
-        p[0] = AST.CompoundExpr(p[2], p[3])
+        p[0] = AST.CompoundInstr(p[2], p[3])
 
     def p_condition(self, p):
         """condition : expression"""

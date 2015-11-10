@@ -172,7 +172,7 @@ class TreePrinter:
         res += self.name.print_tree(tabs)
         return res
 
-    @addToClass(AST.CompoundExpr)
+    @addToClass(AST.CompoundInstr)
     def print_tree(self, tabs=0):
         res = ""
         for d in self.declarations:

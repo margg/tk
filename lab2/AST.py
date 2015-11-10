@@ -26,8 +26,6 @@ class Declaration(Node):
         self.inits = []
         if inits:
             self.inits.extend(inits)
-        else:
-            raise SyntaxError
 
 
 class Initializer(Node):
@@ -103,6 +101,17 @@ class BreakInstr(Instruction):
         super(BreakInstr, self).__init__()
 
 
+class CompoundInstr(Instruction):
+    def __init__(self, declarations, fundefs):
+        super(CompoundInstr, self).__init__()
+        self.declarations = []
+        self.fundefs = []
+        if declarations:
+            self.declarations.extend(declarations)
+        if fundefs:
+            self.fundefs.extend(fundefs)
+
+
 class Expression(Node):
     def __init__(self):
         pass
@@ -166,13 +175,3 @@ class Argument(Node):
     def __init__(self, arg_type, name):
         self.arg_type = arg_type
         self.name = name
-
-
-class CompoundExpr(Node):
-    def __init__(self, declarations, fundefs):
-        self.declarations = []
-        self.fundefs = []
-        if declarations:
-            self.declarations.extend(declarations)
-        if fundefs:
-            self.fundefs.extend(fundefs)
