@@ -16,6 +16,7 @@ if __name__ == '__main__':
     Cparser = Cparser()
     parser = yacc.yacc(module=Cparser)
     text = file.read()
-    ast = parser.parse(text, lexer=Cparser.scanner, debug=True)
-    printer = TreePrinter.TreePrinter()
-    print ast.print_tree()
+    ast = parser.parse(text, lexer=Cparser.scanner, debug=False)
+    if ast:
+        printer = TreePrinter.TreePrinter()
+        print ast.print_tree()
