@@ -1,4 +1,7 @@
 # IntelliJ files
 .idea/
 *.iml
-
+.DS_STORE
+parser.out
+parsetab.py
+*.pyc
