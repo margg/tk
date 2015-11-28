@@ -1,24 +1,24 @@
 """grammar"""
 
-"""program : instruction_list"""
+# """program : instruction_list"""
 
-"""instruction_list : instruction_list instruction_item
-                        | """
+# """instruction_list : instruction_list instruction_item
+#                         | """
 
 """instruction_item : declarations
                         | fundefs_opt
                         | instructions_opt"""
 
-"""declarations : declarations declaration
-                    | """
-
-"""declaration : TYPE inits ';'
-                   | error ';' """
-
-"""inits : inits ',' init
-             | init """
-
-"""init : ID '=' expression """
+# """declarations : declarations declaration
+#                     | """
+#
+# """declaration : TYPE inits ';'
+#                    | error ';' """
+#
+# """inits : inits ',' init
+#              | init """
+#
+# """init : ID '=' expression """
 
 """instructions_opt : instructions
                         | """
