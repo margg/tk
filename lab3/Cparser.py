@@ -158,31 +158,45 @@ class Cparser(object):
         p[0] = AST.CompoundInstr(p[2], p[3]).add_lineno(p.lineno)
 
     def p_condition(self, p):
-        """condition : expression"""
+        """condition : expression """
         p[0] = p[1]
 
     def p_const(self, p):
         """const : integer
                  | float
-                 | string"""
+                 | string """
         p[0] = p[1]
 
     def p_integer(self, p):
-        """integer : INTEGER"""
+        """integer : INTEGER """
         p[0] = AST.Integer(p[1]).add_lineno(p.lineno)
 
     def p_float(self, p):
-        """float : FLOAT"""
+        """float : FLOAT """
         p[0] = AST.Float(p[1]).add_lineno(p.lineno)
 
     def p_string(self, p):
-        """string : STRING"""
+        """string : STRING """
         p[0] = AST.String(p[1]).add_lineno(p.lineno)
 
     def p_expression(self, p):
-        """expression : const
-                      | ID
-                      | expression '+' expression
+        """expression : const_expr
+                      | id_expr
+                      | binary_expr
+                      | enclosed_expr
+                      | method_call_expr """
+        p[0] = p[1]
+
+    def p_const_expr(self, p):
+        """const_expr : const """
+        p[0] = p[1]
+
+    def p_id_expr(self, p):
+        """id_expr : ID """
+        p[0] = AST.Name(p[1]).add_lineno(p.lineno)
+
+    def p_binary_expr(self, p):
+        """binary_expr : expression '+' expression
                       | expression '-' expression
                       | expression '*' expression
                       | expression '/' expression
@@ -199,22 +213,18 @@ class Cparser(object):
                       | expression '>' expression
                       | expression '<' expression
                       | expression LE expression
-                      | expression GE expression
-                      | '(' expression ')'
-                      | '(' error ')'
-                      | ID '(' expr_list_or_empty ')'
-                      | ID '(' error ')' """
-        if len(p) == 2:
-            if isinstance(p[1], AST.Const):
-                p[0] = p[1]
-            else:
-                p[0] = AST.Name(p[1]).add_lineno(p.lineno)
-        elif p[1] == '(':
-            p[0] = AST.EnclosedExpr(p[2]).add_lineno(p.lineno)
-        elif p[2] == '(':
-            p[0] = AST.MethodCallExpr(AST.Name(p[1]).add_lineno(p.lineno), p[3]).add_lineno(p.lineno)
-        else:
-            p[0] = AST.BinaryExpr(p[1], AST.Operator(p[2]).add_lineno(p.lineno), p[3]).add_lineno(p.lineno)
+                      | expression GE expression """
+        p[0] = AST.BinaryExpr(p[1], AST.Operator(p[2]).add_lineno(p.lineno), p[3]).add_lineno(p.lineno)
+
+    def p_enclosed_expr(self, p):
+        """enclosed_expr : '(' expression ')'
+                         | '(' error ')' """
+        p[0] = AST.EnclosedExpr(p[2]).add_lineno(p.lineno)
+
+    def p_method_call_expr(self, p):
+        """method_call_expr : ID '(' expr_list_or_empty ')'
+                            | ID '(' error ')' """
+        p[0] = AST.MethodCallExpr(AST.Name(p[1]).add_lineno(p.lineno), p[3]).add_lineno(p.lineno)
 
     def p_expr_list_or_empty(self, p):
         """expr_list_or_empty : expr_list
