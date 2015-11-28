@@ -1,20 +1,28 @@
 class Node(object):
+
+    def add_lineno(self, lineno):
+        self.lineno = lineno
+        return self
+
     def __str__(self):
         return self.print_tree()
 
 
 class Name(Node):
     def __init__(self, name):
+        super(Name, self).__init__()
         self.name = name
 
 
 class Operator(Node):
     def __init__(self, op):
+        super(Operator, self).__init__()
         self.op = op
 
 
 class Program(Node):
     def __init__(self, body):
+        super(Program, self).__init__()
         self.body = []
         if body:
             self.body.extend(body)
@@ -22,6 +30,7 @@ class Program(Node):
 
 class Declaration(Node):
     def __init__(self, var_type, inits):
+        super(Declaration, self).__init__()
         self.var_type = var_type
         self.inits = []
         if inits:
@@ -30,13 +39,13 @@ class Declaration(Node):
 
 class Initializer(Node):
     def __init__(self, name, expression):
+        super(Initializer, self).__init__()
         self.name = name
         self.expression = expression
 
 
 class Instruction(Node):
-    def __init__(self):
-        pass
+    pass
 
 
 class PrintInstr(Instruction):
@@ -113,8 +122,7 @@ class CompoundInstr(Instruction):
 
 
 class Expression(Node):
-    def __init__(self):
-        pass
+    pass
 
 
 class Const(Expression):
@@ -163,6 +171,7 @@ class MethodCallExpr(Expression):
 
 class FunctionDef(Node):
     def __init__(self, return_type, name, args, body):
+        super(FunctionDef, self).__init__()
         self.return_type = return_type
         self.name = name
         self.args = []
@@ -173,5 +182,6 @@ class FunctionDef(Node):
 
 class Argument(Node):
     def __init__(self, arg_type, name):
+        super(Argument, self).__init__()
         self.arg_type = arg_type
         self.name = name

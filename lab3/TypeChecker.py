@@ -2,6 +2,7 @@
 
 import AST
 
+
 class NodeVisitor(object):
 
     def visit(self, node):

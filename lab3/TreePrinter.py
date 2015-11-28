@@ -134,7 +134,7 @@ class TreePrinter:
 
     @addToClass(AST.BinaryExpr)
     def print_tree(self, tabs=0):
-        res = self.print_tabs(tabs) + str(self.op)
+        res = self.print_tabs(tabs) + self.op.print_tree()
         tabs += 1
         res += self.left.print_tree(tabs)
         res += self.right.print_tree(tabs)
