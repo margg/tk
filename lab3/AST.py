@@ -8,19 +8,19 @@ class Node(object):
         return self.print_tree()
 
 
-class Name(Node):
+class Name(Node):                               # done
     def __init__(self, name):
         super(Name, self).__init__()
         self.name = name
 
 
-class Operator(Node):
+class Operator(Node):                               # done
     def __init__(self, op):
         super(Operator, self).__init__()
         self.op = op
 
 
-class Program(Node):
+class Program(Node):                               # sprawdzac czy instrukcje sa wewnatrz funkcji!!!!
     def __init__(self, body):
         super(Program, self).__init__()
         self.body = []
@@ -28,7 +28,7 @@ class Program(Node):
             self.body.extend(body)
 
 
-class Declaration(Node):
+class Declaration(Node):                               # done
     def __init__(self, var_type, inits):
         super(Declaration, self).__init__()
         self.var_type = var_type
@@ -37,7 +37,7 @@ class Declaration(Node):
             self.inits.extend(inits)
 
 
-class Initializer(Node):
+class Initializer(Node):                               # done
     def __init__(self, name, expression):
         super(Initializer, self).__init__()
         self.name = name
@@ -48,7 +48,7 @@ class Instruction(Node):
     pass
 
 
-class PrintInstr(Instruction):
+class PrintInstr(Instruction):                               # done
     def __init__(self, expr_list):
         super(PrintInstr, self).__init__()
         self.expr_list = []
@@ -56,21 +56,21 @@ class PrintInstr(Instruction):
             self.expr_list.extend(expr_list)
 
 
-class LabeledInstr(Instruction):
+class LabeledInstr(Instruction):                               # done
     def __init__(self, label, instruction):
         super(LabeledInstr, self).__init__()
         self.label = label
         self.instruction = instruction
 
 
-class Assignment(Instruction):
+class Assignment(Instruction):                               # done
     def __init__(self, target, value):
         super(Assignment, self).__init__()
         self.target = target
         self.value = value
 
 
-class IfInstr(Instruction):
+class IfInstr(Instruction):                               # done
     def __init__(self, condition, body, else_body):
         super(IfInstr, self).__init__()
         self.condition = condition
@@ -78,14 +78,14 @@ class IfInstr(Instruction):
         self.else_body = else_body
 
 
-class WhileInstr(Instruction):
+class WhileInstr(Instruction):                               # done
     def __init__(self, condition, body):
         super(WhileInstr, self).__init__()
         self.condition = condition
         self.body = body
 
 
-class RepeatInstr(Instruction):
+class RepeatInstr(Instruction):                               # done
     def __init__(self, body, condition):
         super(RepeatInstr, self).__init__()
         self.condition = condition
@@ -94,59 +94,59 @@ class RepeatInstr(Instruction):
             self.body.extend(body)
 
 
-class ReturnInstr(Instruction):
+class ReturnInstr(Instruction):                               # done
     def __init__(self, expression):
         super(ReturnInstr, self).__init__()
         self.expression = expression
 
 
-class ContinueInstr(Instruction):
+class ContinueInstr(Instruction):                               # done
     def __init__(self):
         super(ContinueInstr, self).__init__()
 
 
-class BreakInstr(Instruction):
+class BreakInstr(Instruction):                               # done
     def __init__(self):
         super(BreakInstr, self).__init__()
 
 
-class CompoundInstr(Instruction):
-    def __init__(self, declarations, fundefs):
+class CompoundInstr(Instruction):                               # done
+    def __init__(self, declarations, instructions):
         super(CompoundInstr, self).__init__()
         self.declarations = []
-        self.fundefs = []
+        self.instructions = []
         if declarations:
             self.declarations.extend(declarations)
-        if fundefs:
-            self.fundefs.extend(fundefs)
+        if instructions:
+            self.instructions.extend(instructions)
 
 
 class Expression(Node):
     pass
 
 
-class Const(Expression):
+class Const(Expression):                               # done - no impl.
     def __init__(self, value):
         super(Const, self).__init__()
         self.value = value
 
 
-class Integer(Const):
+class Integer(Const):                               # done
     def __init__(self, value):
         super(Integer, self).__init__(value)
 
 
-class Float(Const):
+class Float(Const):                               # done
     def __init__(self, value):
         super(Float, self).__init__(value)
 
 
-class String(Const):
+class String(Const):                               # done
     def __init__(self, value):
         super(String, self).__init__(value)
 
 
-class BinaryExpr(Expression):
+class BinaryExpr(Expression):                               # done
     def __init__(self, left, op, right):
         super(BinaryExpr, self).__init__()
         self.op = op
@@ -154,7 +154,7 @@ class BinaryExpr(Expression):
         self.right = right
 
 
-class EnclosedExpr(Expression):
+class EnclosedExpr(Expression):                               # done
     def __init__(self, expr):
         super(EnclosedExpr, self).__init__()
         self.expr = expr
@@ -169,7 +169,7 @@ class MethodCallExpr(Expression):
             self.args.extend(args)
 
 
-class FunctionDef(Node):
+class FunctionDef(Node):                                    # done - sprawdzic czy w scopie "Program" !!!
     def __init__(self, return_type, name, args, body):
         super(FunctionDef, self).__init__()
         self.return_type = return_type

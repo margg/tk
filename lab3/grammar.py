@@ -5,9 +5,9 @@
 # """instruction_list : instruction_list instruction_item
 #                         | """
 
-"""instruction_item : declarations
-                        | fundefs_opt
-                        | instructions_opt"""
+"""instruction_item : declaration
+                        | fundef
+                        | instruction"""
 
 # """declarations : declarations declaration
 #                     | """

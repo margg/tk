@@ -12,7 +12,6 @@ class VariableSymbol(Symbol):
         self.type = type
 
 
-
 class FunctionDefSymbol(Symbol):
 
     def __init__(self, name, type, args):
@@ -37,13 +36,14 @@ class SymbolTable:
     def get(self, name):    # get variable symbol or fundef from <name> entry
         if name in self.items:
             return self.items[name]
-        return None
+        else:
+            return None if not self.get_parent_scope() else self.get_parent_scope().get(name)
 
     def get_parent_scope(self):
         return self.parent
 
     def push_scope(self, name):
-        return SymbolTable(self, name, self.items)
+        return SymbolTable(self, name)
 
     def pop_scope(self):
         return self.get_parent_scope()

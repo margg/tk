@@ -81,14 +81,6 @@ class Cparser(object):
         """init : ID '=' expression """
         p[0] = AST.Initializer(AST.Name(p[1]).add_lineno(p.lineno(1)), p[3]).add_lineno(p.lineno(1))
 
-    def p_instructions_opt(self, p):
-        """instructions_opt : instructions
-                            | """
-        if len(p) == 2:
-            p[0] = list(p[1])
-        else:
-            p[0] = []
-
     def p_instructions(self, p):
         """instructions : instructions instruction
                         | instruction """
@@ -240,23 +232,6 @@ class Cparser(object):
         if len(p) == 4:
             p[0] = list(p[1])
             p[0].append(p[3])
-        else:
-            p[0] = [p[1]]
-
-    def p_fundefs_opt(self, p):
-        """fundefs_opt : fundefs
-                       | """
-        if len(p) == 2:
-            p[0] = list(p[1])
-        else:
-            p[0] = []
-
-    def p_fundefs(self, p):
-        """fundefs : fundefs fundef
-                   | fundef """
-        if len(p) == 3:
-            p[0] = list(p[1])
-            p[0].append(p[2])
         else:
             p[0] = [p[1]]
 

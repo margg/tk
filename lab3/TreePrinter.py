@@ -177,6 +177,6 @@ class TreePrinter:
         res = ""
         for d in self.declarations:
             res += d.print_tree(tabs)
-        for f in self.fundefs:
+        for f in self.instructions:
             res += f.print_tree(tabs)
         return res
