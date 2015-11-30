@@ -111,6 +111,13 @@ class TypeChecker(NodeVisitor):
     def visit_Name(self, node):
         return node.name
 
+    def visit_CheckedName(self, node):
+        if self.symbol_table.get(node.name):
+            return node.name
+        else:
+            print("Error: Usage of undeclared variable '%s': line %s" % (node.name, node.lineno))
+            return node.name
+
     def visit_Operator(self, node):
         return node.op
 
@@ -133,7 +140,7 @@ class TypeChecker(NodeVisitor):
         for init in node.inits:
             name = self.visit(init.name)
             if self.symbol_table.get(name):
-                print("Error: Multiple definition of '%s': line %d" % (name, node.lineno))
+                print("Error: Variable '%s' already declared: line %d" % (name, node.lineno))
             else:
                 self.symbol_table.put(name, VariableSymbol(init.name, node.var_type))
             self.visit(init)
@@ -142,14 +149,7 @@ class TypeChecker(NodeVisitor):
         expression_ret_type = self.get_return_type(node.expression)
         declared_type = self.get_return_type(node.name)
         if expression_ret_type and declared_type:
-            if declared_type == 'int' and expression_ret_type == 'float':
-                print("Warning: Possible loss of precision: assignment of %s to %s: line %s" %
-                      (expression_ret_type, declared_type, node.lineno))
-            elif declared_type == 'float' and expression_ret_type == 'int':
-                pass
-            elif declared_type != expression_ret_type:
-                print("Error: Assignment of %s to %s: line %s" %
-                      (declared_type, expression_ret_type, node.lineno))
+            TypeChecker.check_type_consistency(node, declared_type, expression_ret_type)
 
     def visit_PrintInstr(self, node):
         for item in node.expr_list:
@@ -164,13 +164,7 @@ class TypeChecker(NodeVisitor):
         if not declared_type:
             print("Error: Variable '%s' undefined in current scope: line %d" % (self.visit(node.target), node.lineno))
         elif expression_ret_type:
-            if declared_type == 'int' and expression_ret_type == 'float':
-                print("Warning: Possible loss of precision: assignment of %s to %s: line %s" %
-                      (expression_ret_type, declared_type, node.lineno))
-            elif declared_type == 'float' and expression_ret_type == 'int':
-                pass
-            elif declared_type != expression_ret_type:
-                print("Error: Assignment of %s to %s: line %s" % (expression_ret_type, declared_type, node.lineno))
+            TypeChecker.check_type_consistency(node, declared_type, expression_ret_type)
 
     def visit_IfInstr(self, node):
         self.visit(node.condition)
@@ -234,14 +228,14 @@ class TypeChecker(NodeVisitor):
     def visit_BinaryExpr(self, node):
         type_1 = self.get_return_type(node.left)
         if not type_1:
-            print("Error: undeclared variable %s on line %s" % (self.visit(node.left), node.lineno))
+            print("Error: Usage of undeclared variable '%s': line %s" % (self.visit(node.left), node.lineno))
         type_2 = self.get_return_type(node.right)
         if not type_2:
-            print("Error: undeclared variable %s on line %s" % (self.visit(node.right), node.lineno))
+            print("Error: Usage of undeclared variable '%s': line %s" % (self.visit(node.right), node.lineno))
         op = self.visit(node.op)
         ret = self.ttypes[op][type_1][type_2]
         if not ret:
-            print("Error: Illegal operation,  %s %s %s: line %s" % (type_1, op, type_1, node.lineno))
+            print("Error: Illegal operation, %s %s %s: line %s" % (type_1, op, type_1, node.left.lineno))
         return ret
 
     def visit_EnclosedExpr(self, node):
@@ -294,4 +288,14 @@ class TypeChecker(NodeVisitor):
             var = self.symbol_table.get(node.name)
             return None if not var else var.type.name
         return self.visit(node)
+
+    @staticmethod
+    def check_type_consistency(node, declared_type, expression_ret_type):
+        if declared_type == 'int' and expression_ret_type == 'float':
+            print("Warning: Possible loss of precision: assignment of %s to %s: line %s" %
+                  (expression_ret_type, declared_type, node.lineno))
+        elif declared_type == 'float' and expression_ret_type == 'int':
+            pass
+        elif declared_type != expression_ret_type:
+            print("Error: Assignment of %s to %s: line %s" % (expression_ret_type, declared_type, node.lineno))
 

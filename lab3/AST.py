@@ -14,6 +14,10 @@ class Name(Node):                               # done
         self.name = name
 
 
+class CheckedName(Name):
+    pass
+
+
 class Operator(Node):                               # done
     def __init__(self, op):
         super(Operator, self).__init__()
