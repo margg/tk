@@ -75,6 +75,8 @@ if __name__ == '__main__':
     # test_file(test_dir, "opers.in")
 
     for filename in test_in:
-        if filename in ["funs7.in", "funs8.in"]:
+        if filename == "funs7.in":
+            continue
+        if filename == "funs8.in":
             continue
         test_file(test_dir, filename)

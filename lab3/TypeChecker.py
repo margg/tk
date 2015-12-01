@@ -9,28 +9,13 @@ class NodeVisitor:
 
     def visit(self, node):
         method = 'visit_' + node.__class__.__name__
-        # print(method)
         visitor = getattr(self, method, self.generic_visit)
         return visitor(node)
 
-    def generic_visit(self, node):  # Called if no explicit visitor function exists for a node.
+    def generic_visit(self, node):
         if isinstance(node, list):
             for elem in node:
                 self.visit(elem)
-        # else:
-        #     for child in node.children:
-        #         if isinstance(child, list):
-        #             for item in child:
-        #                 if isinstance(item, AST.Node):
-        #                     self.visit(item)
-        #         elif isinstance(child, AST.Node):
-        #             self.visit(child)
-        print("generic visit of %s" % node.__class__.__name__)
-
-        # simpler version of generic_visit, not so general
-        # def generic_visit(self, node):
-        # for child in node.children:
-        #        self.visit(child)
 
 
 class TypeChecker(NodeVisitor):
@@ -139,8 +124,12 @@ class TypeChecker(NodeVisitor):
     def visit_Declaration(self, node):
         for init in node.inits:
             name = self.visit(init.name)
-            if self.symbol_table.get(name):
-                print("Error: Variable '%s' already declared: line %d" % (name, node.lineno))
+            var = self.symbol_table.get(name)
+            if var:
+                if isinstance(var, FunctionDefSymbol):
+                    print("Error: Function identifier '%s' used as a variable: line %d" % (name, node.lineno))
+                else:
+                    print("Error: Variable '%s' already declared: line %d" % (name, node.lineno))
             else:
                 self.symbol_table.put(name, VariableSymbol(init.name, node.var_type))
             self.visit(init)
@@ -235,7 +224,7 @@ class TypeChecker(NodeVisitor):
         op = self.visit(node.op)
         ret = self.ttypes[op][type_1][type_2]
         if not ret:
-            print("Error: Illegal operation, %s %s %s: line %s" % (type_1, op, type_1, node.left.lineno))
+            print("Error: Illegal operation, %s %s %s: line %s" % (type_1, op, type_2, node.left.lineno))
         return ret
 
     def visit_EnclosedExpr(self, node):

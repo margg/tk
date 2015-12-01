@@ -115,7 +115,7 @@ class Cparser(object):
 
     def p_assignment(self, p):
         """assignment : ID '=' expression ';' """
-        p[0] = AST.Assignment(AST.CheckedName(p[1]).add_lineno(p.lineno(1)), p[3]).add_lineno(p.lineno(1))
+        p[0] = AST.Assignment(AST.Name(p[1]).add_lineno(p.lineno(1)), p[3]).add_lineno(p.lineno(1))
 
     def p_choice_instr(self, p):
         """choice_instr : IF '(' condition ')' instruction  %prec IFX
