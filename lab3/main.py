@@ -1,6 +1,5 @@
 import ply.yacc as yacc
 from Cparser import Cparser
-import TreePrinter
 from TypeChecker import TypeChecker
 import os
 from cStringIO import StringIO
@@ -9,7 +8,6 @@ import sys
 
 def test_file(test_dir, filename):
     cparser = Cparser()
-
     parser = yacc.yacc(module=cparser)
 
     try:
@@ -24,9 +22,6 @@ def test_file(test_dir, filename):
 
     text = file.read()
     ast = parser.parse(text, lexer=cparser.scanner, debug=False)
-    if ast:
-        printer = TreePrinter.TreePrinter()
-        ast.print_tree()
 
     typeChecker = TypeChecker()
     typeChecker.visit(ast)
@@ -36,7 +31,7 @@ def test_file(test_dir, filename):
     name = os.path.join(test_dir, os.path.splitext(filename)[0])
     file_expected = "{0}.expected".format(name)
     actual_content = mystdout.getvalue()
-    expected_content = open(file_expected).read()
+    expected_content = open(file_expected).read().replace("\r", "")
     res = cmp(actual_content, expected_content)
     assert res == 0, "test output and file {0} differ\n---ACTUAL---\n{1}\n---EXPECTED---\n{2}\n---".format(
         file_expected, actual_content, expected_content)
@@ -44,8 +39,6 @@ def test_file(test_dir, filename):
 
 
 if __name__ == '__main__':
-
-    # Cparser = Cparser()
 
     test_dir = "tests_err"
 
@@ -57,26 +50,8 @@ if __name__ == '__main__':
             elif filename.endswith('.in'):
                 test_in.append(filename)
 
-    filename = "vars_redeclared.in"
-
-    # test_in = ["control_transfer.in"]
-    # test_in = ["funs1.in"]
-    # test_in = ["funs2.in"]
-    # test_in = ["funs3.in"]
-    # test_in = ["funs4.in"]
-    # test_in = ["funs5.in"]
-    # test_in = ["funs6.in"]
-    # test_in = ["funs7.in"]                # shadowing
-    # test_in = ["funs8.in"]                # shadowing
-    # test_in = ["opers.in"]                # lineno nie dziala
-    # test_in = ["vars_redeclared.in"]
-    # test_in = ["vars_undef.in"]           # undeclared variable w princie
-
-    # test_file(test_dir, "opers.in")
-
     for filename in test_in:
-        if filename == "funs7.in":
-            continue
-        if filename == "funs8.in":
-            continue
-        test_file(test_dir, filename)
+        try:
+            test_file(test_dir, filename)
+        except AssertionError as e:
+            print(e.message)

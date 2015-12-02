@@ -269,8 +269,6 @@ class TypeChecker(NodeVisitor):
         name = self.visit(node.name)
         if self.symbol_table.name == "FunctionDef":
             self.symbol_table.put(name, VariableSymbol(node.name, node.arg_type))
-        else:
-            print("visiting argument outside of FunctionDef scope")
 
     def get_return_type(self, node):
         if isinstance(node, AST.Name):
