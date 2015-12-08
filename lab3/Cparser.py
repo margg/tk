@@ -171,24 +171,16 @@ class Cparser(object):
         """string : STRING """
         p[0] = AST.String(p[1]).add_lineno(p.lineno(1))
 
-    def p_expression(self, p):
-        """expression : const_expr
-                      | id_expr
-                      | binary_expr
-                      | enclosed_expr
-                      | method_call_expr """
+    def p_expression1(self, p):
+        """expression : const """
         p[0] = p[1]
 
-    def p_const_expr(self, p):
-        """const_expr : const """
-        p[0] = p[1]
-
-    def p_id_expr(self, p):
-        """id_expr : ID """
+    def p_expression2(self, p):
+        """expression : ID """
         p[0] = AST.CheckedName(p[1]).add_lineno(p.lineno(1))
 
-    def p_binary_expr(self, p):
-        """binary_expr : expression '+' expression
+    def p_expression3(self, p):
+        """expression : expression '+' expression
                       | expression '-' expression
                       | expression '*' expression
                       | expression '/' expression
@@ -208,14 +200,14 @@ class Cparser(object):
                       | expression GE expression """
         p[0] = AST.BinaryExpr(p[1], AST.Operator(p[2]).add_lineno(p.lineno(1)), p[3]).add_lineno(p.lineno(1))
 
-    def p_enclosed_expr(self, p):
-        """enclosed_expr : '(' expression ')'
-                         | '(' error ')' """
-        p[0] = AST.EnclosedExpr(p[2]).add_lineno(p.lineno(1))
+    def p_expression4(self, p):
+        """expression : '(' expression ')'
+                      | '(' error ')' """
+        p[0] = p[2]
 
-    def p_method_call_expr(self, p):
-        """method_call_expr : ID '(' expr_list_or_empty ')'
-                            | ID '(' error ')' """
+    def p_expression5(self, p):
+        """expression : ID '(' expr_list_or_empty ')'
+                      | ID '(' error ')' """
         p[0] = AST.MethodCallExpr(AST.Name(p[1]).add_lineno(p.lineno(1)), p[3]).add_lineno(p.lineno(1))
 
     def p_expr_list_or_empty(self, p):
