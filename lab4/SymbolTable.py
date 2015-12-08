@@ -33,11 +33,24 @@ class SymbolTable:
     def put(self, name, symbol):    # put variable symbol or fundef under <name> entry
         self.items[name] = symbol
 
-    def get(self, name):    # get variable symbol or fundef from <name> entry
+    def get(self, name):    # get variable symbol or fundef from <name> entry - through all scopes up
         if name in self.items:
             return self.items[name]
         else:
             return None if not self.get_parent_scope() else self.get_parent_scope().get(name)
+
+    def get_declared_var(self, name):    # get variable symbol or fundef from <name> entry
+        if name in self.items:           # - vars in the scope, fundefs through all scopes up
+            return self.items[name]
+        else:
+            return self.get_fun_def(name)
+
+    def get_fun_def(self, name):    # get fundef from <name> entry - through all scopes up
+        if name in self.items:
+            if isinstance(self.items[name], FunctionDefSymbol):
+                return self.items[name]
+        else:
+            return None if not self.get_parent_scope() else self.get_parent_scope().get_fun_def(name)
 
     def get_parent_scope(self):
         return self.parent
@@ -47,4 +60,10 @@ class SymbolTable:
 
     def pop_scope(self):
         return self.get_parent_scope()
+
+    def set_return_present(self, value):
+        self.return_present = value
+
+    def get_return_present(self):
+        return 1 if hasattr(self, 'return_present') and self.return_present else 0
 
