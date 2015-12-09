@@ -1,6 +1,7 @@
 import ply.yacc as yacc
 from Cparser import Cparser
 from TypeChecker import TypeChecker
+from Interpreter import Interpreter
 import os
 from cStringIO import StringIO
 import sys
@@ -23,8 +24,10 @@ def test_file(test_dir, filename):
     text = file.read()
     ast = parser.parse(text, lexer=cparser.scanner, debug=False)
 
-    typeChecker = TypeChecker()
-    typeChecker.visit(ast)
+    # typeChecker = TypeChecker()
+    # typeChecker.visit(ast)
+
+    ast.accept(Interpreter())
 
     sys.stdout = old_stdout
 

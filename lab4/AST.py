@@ -1,5 +1,8 @@
 class Node(object):
 
+    def accept(self, visitor):
+        return visitor.visit(self)
+
     def add_lineno(self, lineno):
         self.lineno = lineno
         return self
