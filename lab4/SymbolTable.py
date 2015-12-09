@@ -67,3 +67,12 @@ class SymbolTable:
     def get_return_present(self):
         return 1 if hasattr(self, 'return_present') and self.return_present else 0
 
+    def set_inside_loop(self, value):
+        self.inside_loop = value
+
+    def is_inside_loop(self):
+        if hasattr(self, 'inside_loop') and self.inside_loop:
+            return 1
+        else:
+            return self.get_parent_scope() and self.get_parent_scope().is_inside_loop()
+
