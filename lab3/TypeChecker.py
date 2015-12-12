@@ -124,7 +124,7 @@ class TypeChecker(NodeVisitor):
     def visit_Declaration(self, node):
         for init in node.inits:
             name = self.visit(init.name)
-            var = self.symbol_table.get(name)
+            var = self.symbol_table.get_declared_var(name)
             if var:
                 if isinstance(var, FunctionDefSymbol):
                     print("Error: Function identifier '%s' used as a variable: line %d" % (name, node.lineno))
@@ -157,24 +157,23 @@ class TypeChecker(NodeVisitor):
 
     def visit_IfInstr(self, node):
         self.visit(node.condition)
-        self.symbol_table = self.symbol_table.push_scope("IfInstr")
         self.visit(node.body)
         if node.else_body:
             self.visit(node.else_body)
-        self.symbol_table = self.symbol_table.pop_scope()
 
     def visit_WhileInstr(self, node):
         self.visit(node.condition)
-        self.symbol_table = self.symbol_table.push_scope("WhileInstr")
+        self.symbol_table.set_inside_loop(1)
         self.visit(node.body)
-        self.symbol_table = self.symbol_table.pop_scope()
+        self.symbol_table.set_inside_loop(0)
 
     def visit_RepeatInstr(self, node):
-        self.symbol_table = self.symbol_table.push_scope("ReturnInstr")
+        self.symbol_table.set_inside_loop(1)
         for item in node.body:
             self.visit(item)
         self.visit(node.condition)
-        self.symbol_table = self.symbol_table.pop_scope()
+        self.symbol_table.set_inside_loop(0)
+
 
     def visit_ReturnInstr(self, node):
         ret_type = self.get_return_type(node.expression)
@@ -185,6 +184,7 @@ class TypeChecker(NodeVisitor):
             fun_def = scope.get(scope.function_name)
             if fun_def:
                 function_ret_type = fun_def.type.name
+                scope.set_return_present(1)
                 if ret_type and function_ret_type:
                     if function_ret_type == 'int' and ret_type == 'float':
                         print("Warning: Possible loss of precision: returning %s from function returning %s: line %s" %
@@ -201,18 +201,20 @@ class TypeChecker(NodeVisitor):
             print("Error: return instruction outside a function: line %s" % node.lineno)
 
     def visit_ContinueInstr(self, node):
-        if self.symbol_table.name not in ["WhileInstr", "IfInstr", "RepeatInstr"]:
+        if not self.symbol_table.is_inside_loop():
             print("Error: continue instruction outside a loop: line %s" % node.lineno)
 
     def visit_BreakInstr(self, node):
-        if self.symbol_table.name not in ["WhileInstr", "IfInstr", "RepeatInstr"]:
+        if not self.symbol_table.is_inside_loop():
             print("Error: break instruction outside a loop: line %s" % node.lineno)
 
     def visit_CompoundInstr(self, node):
+        self.symbol_table = self.symbol_table.push_scope("CompoundInstr")
         for item in node.declarations:
             self.visit(item)
         for item in node.instructions:
             self.visit(item)
+        self.symbol_table = self.symbol_table.pop_scope()
 
     def visit_BinaryExpr(self, node):
         type_1 = self.get_return_type(node.left)
@@ -226,9 +228,6 @@ class TypeChecker(NodeVisitor):
         if not ret:
             print("Error: Illegal operation, %s %s %s: line %s" % (type_1, op, type_2, node.left.lineno))
         return ret
-
-    def visit_EnclosedExpr(self, node):
-        return self.visit(node.expr)
 
     def visit_MethodCallExpr(self, node):
         name = self.visit(node.name)
@@ -259,10 +258,15 @@ class TypeChecker(NodeVisitor):
             print("Error: Redefinition of function '%s': line %s" % (name, node.lineno))
         self.symbol_table.put(name, FunctionDefSymbol(node.name, node.return_type, node.args))
         self.symbol_table = self.symbol_table.push_scope("FunctionDef")
+        self.symbol_table.put(name, FunctionDefSymbol(node.name, node.return_type, node.args))
         self.symbol_table.function_name = name
         for arg in node.args:
             self.visit(arg)
+        self.symbol_table.set_return_present(0)
         self.visit(node.body)
+        if not self.symbol_table.get_return_present():
+            print("Error: Missing return statement in function '%s' returning %s: line %s" %
+                  (name, self.visit(node.return_type), node.lineno))
         self.symbol_table = self.symbol_table.pop_scope()
 
     def visit_Argument(self, node):
