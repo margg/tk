@@ -1,32 +1,40 @@
 class Memory:
     def __init__(self, name):  # memory name
-        pass
+        self.name = name
+        self.values = {}
 
     def has_key(self, name):  # variable name
-        pass
+        return name in self.values
 
     def get(self, name):  # gets from memory current value of variable <name>
-        pass
+        return self.values[name]
 
     def put(self, name, value):  # puts into memory current value of variable <name>
-        pass
+        self.values[name] = value
 
 
 class MemoryStack:
     def __init__(self, memory=None):  # initialize memory stack with memory <memory>
-        pass
+        self.stack = []
+        if memory:
+            self.push(memory)
 
     def get(self, name):  # gets from memory stack current value of variable <name>
+        for memory in self.stack:
+            pass
+            # przeglądamy od końca i szukamy
         pass
 
     def insert(self, name, value):  # inserts into memory stack variable <name> with value <value>
+
         pass
 
     def set(self, name, value):  # sets variable <name> to value <value>
         pass
 
     def push(self, memory):  # pushes memory <memory> onto the stack
+        self.stack.append(memory)
         pass
 
     def pop(self):  # pops the top memory from the stack
-        pass
+        return self.pop()
