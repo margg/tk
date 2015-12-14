@@ -21,20 +21,17 @@ class MemoryStack:
 
     def get(self, name):  # gets from memory stack current value of variable <name>
         for memory in self.stack:
-            pass
-            # przeglądamy od końca i szukamy
-        pass
+            if memory.has_key(name):
+                return memory.get(name)
 
     def insert(self, name, value):  # inserts into memory stack variable <name> with value <value>
-
-        pass
+        self.stack[-1].put(name, value)
 
     def set(self, name, value):  # sets variable <name> to value <value>
-        pass
+        self.stack[-1].put(name, value)
 
     def push(self, memory):  # pushes memory <memory> onto the stack
         self.stack.append(memory)
-        pass
 
     def pop(self):  # pops the top memory from the stack
         return self.pop()

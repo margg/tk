@@ -24,8 +24,8 @@ def test_file(test_dir, filename):
     text = file.read()
     ast = parser.parse(text, lexer=cparser.scanner, debug=False)
 
-    # typeChecker = TypeChecker()
-    # typeChecker.visit(ast)
+    typeChecker = TypeChecker()
+    typeChecker.visit(ast)
 
     ast.accept(Interpreter())
 
@@ -36,14 +36,14 @@ def test_file(test_dir, filename):
     actual_content = mystdout.getvalue()
     expected_content = open(file_expected).read().replace("\r", "")
     res = cmp(actual_content, expected_content)
-    assert res == 0, "test output and file {0} differ\n---ACTUAL---\n{1}\n---EXPECTED---\n{2}\n---".format(
-        file_expected, actual_content, expected_content)
+    assert res == 0, "test output and file {0} differ\n---ACTUAL---\n{1}\n---EXPECTED---\n{2}\n---"\
+        .format(file_expected, actual_content, expected_content)
     print("Passed test for file '%s'." % filename)
 
 
 if __name__ == '__main__':
 
-    test_dir = "tests_err"
+    test_dir = "tests"
 
     test_in = []
     for dirpath, dirnames, filenames in os.walk(test_dir):
