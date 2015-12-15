@@ -7,9 +7,6 @@ class Node(object):
         self.lineno = lineno
         return self
 
-    def __str__(self):
-        return self.print_tree()
-
 
 class Name(Node):
     def __init__(self, name):

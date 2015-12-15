@@ -8,11 +8,11 @@ import sys
 
 sys.setrecursionlimit(10000)
 
-
 class Interpreter(object):
     def __init__(self):
         self.fun_defs = SymbolTable.SymbolTable(None, "FunctionDefs")
         self.global_memory = MemoryStack()
+        self.global_memory.push(Memory("global"))
         self.function_memory = None
         self.binary_ops = {
             "+": (lambda a, b: a + b),
@@ -20,6 +20,12 @@ class Interpreter(object):
             "*": (lambda a, b: a * b),
             "/": (lambda a, b: a / b),
             "%": (lambda a, b: a % b),
+            "==": (lambda a, b: a == b),
+            "<=": (lambda a, b: a <= b),
+            ">=": (lambda a, b: a >= b),
+            "!=": (lambda a, b: a != b),
+            "||": (lambda a, b: a or b),
+            "&&": (lambda a, b: a and b),
         }
 
     @on('node')
@@ -29,18 +35,25 @@ class Interpreter(object):
     @when(AST.Program)
     def visit(self, node):
         try:
-            for instr in node.body:
-                instr.accept(self)
+            self.visit_list(node.body)
         except ReturnValueException as e:
             return e.value
 
     @when(AST.Name)
     def visit(self, node):
-        return node.name
+        if self.function_memory:
+            ret = self.function_memory.get(node.name)
+            if ret:
+                return ret
+        return self.global_memory.get(node.name)
 
     @when(AST.CheckedName)
     def visit(self, node):
-        return node.name
+        if self.function_memory:
+            ret = self.function_memory.get(node.name)
+            if ret:
+                return ret
+        return self.global_memory.get(node.name)
 
     @when(AST.Operator)
     def visit(self, node):
@@ -54,6 +67,7 @@ class Interpreter(object):
     def visit(self, node):
         for init in node.inits:
             init.accept(self)
+        print(self.global_memory.get(init.name))
 
     @when(AST.Initializer)
     def visit(self, node):
@@ -63,10 +77,6 @@ class Interpreter(object):
             self.function_memory.insert(name, value)
         else:
             self.global_memory.insert(name, value)
-
-    # @when(AST.Instruction)
-    # def visit(self, node):
-    #     node.accept(self)
 
     @when(AST.PrintInstr)
     def visit(self, node):
@@ -89,36 +99,32 @@ class Interpreter(object):
     @when(AST.IfInstr)
     def visit(self, node):
         if node.condition.accept(self):
-            return node.body.accept(self)
+            node.body.accept(self)
         else:
-            return node.else_body.accept(self)
+            node.else_body.accept(self)
 
     @when(AST.WhileInstr)
     def visit(self, node):
-        r = None
         try:
             while node.condition.accept(self):
                 try:
-                    r = node.body.accept(self)
+                    self.visit_list(node.body)
                 except ContinueException:
                     continue
-            return r
         except BreakException:
-            return r
+            return
 
     @when(AST.RepeatInstr)
     def visit(self, node):
-        r = None
         try:
-            node.body.accept(self)
+            self.visit_list(node.body)
             while not node.condition.accept(self):
                 try:
-                    r = node.body.accept(self)
+                    self.visit_list(node.body)
                 except ContinueException:
                     continue
-            return r
         except BreakException:
-            return r
+            return
 
     @when(AST.ReturnInstr)
     def visit(self, node):
@@ -135,14 +141,30 @@ class Interpreter(object):
     @when(AST.CompoundInstr)
     def visit(self, node):
         # check other exceptions if something is wrong
+        if self.function_memory:
+            self.function_memory.push(Memory("compound_function"))
+        else:
+            self.global_memory.push(Memory("compound_global"))
         for decl in node.declarations:
             decl.accept(self)
         for instr in node.instructions:
             instr.accept(self)
+        if self.function_memory:
+            self.function_memory.pop()
+        else:
+            self.global_memory.pop()
 
     @when(AST.Const)
     def visit(self, node):
         return node.value
+
+    @when(AST.Integer)
+    def visit(self, node):
+        return int(node.value)
+
+    @when(AST.Float)
+    def visit(self, node):
+        return float(node.value)
 
     @when(AST.BinaryExpr)
     def visit(self, node):
@@ -154,27 +176,31 @@ class Interpreter(object):
     def visit(self, node):
         old_memory = self.function_memory
         self.function_memory = MemoryStack()
-        fun_def = self.fun_defs.get(node.name)
+        self.function_memory.push(Memory("function"))
+        fun_def = self.fun_defs.get(node.name.accept(self))
+        if fun_def is None:
+            raise RuntimeError("not-existing method {} called".format(node.name.accept(self)))
         for call_arg, fun_arg in zip(node.args, fun_def.args):
             self.function_memory.insert(fun_arg.accept(self), call_arg.accept(self))
         try:
-            node.body.accept(self)
-            # for decl in node.body.declarations:
-            #     decl.accept(self)
-            # for instr in node.body.instructions:
-            #     instr.accept(self)
+            fun_def.body.accept(self)
         except ReturnValueException as e:
             self.function_memory = old_memory
             return e.value
 
     @when(AST.Argument)
     def visit(self, node):
-        return node.name
+        return node.name.name
 
 
     @when(AST.FunctionDef)
     def visit(self, node):
-        self.fun_defs.put(node.name, node)
+        self.fun_defs.put(node.name.accept(self), node)
+
+    def visit_list(self, body):
+        print(body)
+        for instr in body:
+            instr.accept(self)
 
 
 
