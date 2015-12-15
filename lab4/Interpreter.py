@@ -91,9 +91,9 @@ class Interpreter(object):
         target = node.target.name
         value = node.value.accept(self)
         if self.function_memory:
-            self.function_memory.insert(target, value)
+            self.function_memory.set(target, value)
         else:
-            self.global_memory.insert(target, value)
+            self.global_memory.set(target, value)
 
     @when(AST.IfInstr)
     def visit(self, node):
@@ -142,18 +142,22 @@ class Interpreter(object):
     @when(AST.CompoundInstr)
     def visit(self, node):
         # check other exceptions if something is wrong
-        if self.function_memory:
-            self.function_memory.push(Memory("compound_function"))
-        else:
-            self.global_memory.push(Memory("compound_global"))
-        for decl in node.declarations:
-            decl.accept(self)
-        for instr in node.instructions:
-            instr.accept(self)
-        if self.function_memory:
-            self.function_memory.pop()
-        else:
-            self.global_memory.pop()
+        try:
+            if self.function_memory:
+                self.function_memory.push(Memory("compound_function"))
+            else:
+                self.global_memory.push(Memory("compound_global"))
+            for decl in node.declarations:
+                decl.accept(self)
+            for instr in node.instructions:
+                instr.accept(self)
+        except Exception as e:
+            raise e
+        finally:
+            if self.function_memory:
+                self.function_memory.pop()
+            else:
+                self.global_memory.pop()
 
     @when(AST.Const)
     def visit(self, node):
@@ -187,7 +191,12 @@ class Interpreter(object):
         for call_arg, fun_arg in zip(evaluated_args, fun_def.args):
             self.function_memory.insert(fun_arg.name.name, call_arg)
         try:
-            fun_def.body.accept(self)
+            # fun_def.body.accept(self)
+            for decl in fun_def.body.declarations:
+                decl.accept(self)
+            for instr in fun_def.body.instructions:
+                instr.accept(self)
+
         except ReturnValueException as e:
             self.function_memory = old_memory
             return e.value
