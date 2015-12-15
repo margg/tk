@@ -13,6 +13,7 @@ class Interpreter(object):
     def __init__(self):
         self.fun_defs = SymbolTable.SymbolTable(None, "FunctionDefs")
         self.global_memory = MemoryStack()
+        self.global_memory.push(Memory("global"))
         self.function_memory = None
         self.binary_ops = {
             "+": (lambda a, b: a + b),
@@ -20,6 +21,12 @@ class Interpreter(object):
             "*": (lambda a, b: a * b),
             "/": (lambda a, b: a / b),
             "%": (lambda a, b: a % b),
+            "==": (lambda a, b: a == b),
+            "<=": (lambda a, b: a <= b),
+            ">=": (lambda a, b: a >= b),
+            "!=": (lambda a, b: a != b),
+            "||": (lambda a, b: a or b),
+            "&&": (lambda a, b: a and b),
         }
 
     @on('node')
@@ -110,7 +117,8 @@ class Interpreter(object):
     def visit(self, node):
         r = None
         try:
-            node.body.accept(self)
+            for instr in node.body:
+                instr.accept(self)
             while not node.condition.accept(self):
                 try:
                     r = node.body.accept(self)
@@ -135,10 +143,18 @@ class Interpreter(object):
     @when(AST.CompoundInstr)
     def visit(self, node):
         # check other exceptions if something is wrong
+        if self.function_memory:
+            self.function_memory.push(Memory("compound_function"))
+        else:
+            self.global_memory.push(Memory("compound_global"))
         for decl in node.declarations:
             decl.accept(self)
         for instr in node.instructions:
             instr.accept(self)
+        if self.function_memory:
+            self.function_memory.pop()
+        else:
+            self.global_memory.pop()
 
     @when(AST.Const)
     def visit(self, node):
@@ -154,11 +170,12 @@ class Interpreter(object):
     def visit(self, node):
         old_memory = self.function_memory
         self.function_memory = MemoryStack()
-        fun_def = self.fun_defs.get(node.name)
+        self.function_memory.push(Memory("function"))
+        fun_def = self.fun_defs.get(node.name.accept(self))
         for call_arg, fun_arg in zip(node.args, fun_def.args):
             self.function_memory.insert(fun_arg.accept(self), call_arg.accept(self))
         try:
-            node.body.accept(self)
+            fun_def.body.accept(self)
             # for decl in node.body.declarations:
             #     decl.accept(self)
             # for instr in node.body.instructions:
@@ -174,7 +191,7 @@ class Interpreter(object):
 
     @when(AST.FunctionDef)
     def visit(self, node):
-        self.fun_defs.put(node.name, node)
+        self.fun_defs.put(node.name.accept(self), node)
 
 
 
