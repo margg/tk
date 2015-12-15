@@ -144,7 +144,6 @@ class Interpreter(object):
 
     @when(AST.CompoundInstr)
     def visit(self, node):
-        # check other exceptions if something is wrong
         try:
             if self.function_memory:
                 self.function_memory.push(Memory("compound_function"))
@@ -194,12 +193,7 @@ class Interpreter(object):
         for call_arg, fun_arg in zip(evaluated_args, fun_def.args):
             self.function_memory.insert(fun_arg.name.name, call_arg)
         try:
-            # fun_def.body.accept(self)
-            for decl in fun_def.body.declarations:
-                decl.accept(self)
-            for instr in fun_def.body.instructions:
-                instr.accept(self)
-
+            fun_def.body.accept(self)
         except ReturnValueException as e:
             return e.value
         finally:
