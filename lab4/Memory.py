@@ -25,10 +25,12 @@ class MemoryStack:
                 return memory.get(name)
 
     def insert(self, name, value):  # inserts into memory stack variable <name> with value <value>
-        self.stack[-1].put(name, value)
+        if len(self.stack) > 0:
+            self.stack[-1].put(name, value)
 
     def set(self, name, value):  # sets variable <name> to value <value>
-        self.stack[-1].put(name, value)
+        if len(self.stack) > 0:
+            self.stack[-1].put(name, value)
 
     def push(self, memory):  # pushes memory <memory> onto the stack
         self.stack.append(memory)
