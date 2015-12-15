@@ -43,11 +43,19 @@ class Interpreter(object):
 
     @when(AST.Name)
     def visit(self, node):
-        return node.name
+        if self.function_memory:
+            ret = self.function_memory.get(node.name)
+            if ret:
+                return ret
+        return self.global_memory.get(node.name)
 
     @when(AST.CheckedName)
     def visit(self, node):
-        return node.name
+        if self.function_memory:
+            ret = self.function_memory.get(node.name)
+            if ret:
+                return ret
+        return self.global_memory.get(node.name)
 
     @when(AST.Operator)
     def visit(self, node):
