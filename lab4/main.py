@@ -53,6 +53,8 @@ if __name__ == '__main__':
             elif filename.endswith('.in'):
                 test_in.append(filename)
 
+    test_in = ["fib.in"]
+
     for filename in test_in:
         try:
             test_file(test_dir, filename)

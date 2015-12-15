@@ -24,6 +24,8 @@ class Interpreter(object):
             "==": (lambda a, b: a == b),
             "<=": (lambda a, b: a <= b),
             ">=": (lambda a, b: a >= b),
+            ">": (lambda a, b: a > b),
+            "<": (lambda a, b: a < b),
             "!=": (lambda a, b: a != b),
             "||": (lambda a, b: a or b),
             "&&": (lambda a, b: a and b),
@@ -82,7 +84,8 @@ class Interpreter(object):
     @when(AST.PrintInstr)
     def visit(self, node):
         for expression in node.expr_list:
-            print(expression.accept(self))
+            a = expression.accept(self)
+            print a
 
     @when(AST.LabeledInstr)
     def visit(self, node):
@@ -100,26 +103,23 @@ class Interpreter(object):
     @when(AST.IfInstr)
     def visit(self, node):
         if node.condition.accept(self):
-            return node.body.accept(self)
+            node.body.accept(self)
         else:
-            return node.else_body.accept(self)
+            node.else_body.accept(self)
 
     @when(AST.WhileInstr)
     def visit(self, node):
-        r = None
         try:
             while node.condition.accept(self):
                 try:
-                    r = node.body.accept(self)
+                    node.body.accept(self)
                 except ContinueException:
                     continue
-            return r
         except BreakException:
-            return r
+            return
 
     @when(AST.RepeatInstr)
     def visit(self, node):
-        r = None
         try:
             for instr in node.body:
                 instr.accept(self)
@@ -129,9 +129,8 @@ class Interpreter(object):
                         instr.accept(self)
                 except ContinueException:
                     continue
-            return r
         except BreakException:
-            return r
+            return
 
     @when(AST.ReturnInstr)
     def visit(self, node):
@@ -182,11 +181,12 @@ class Interpreter(object):
     @when(AST.MethodCallExpr)
     def visit(self, node):
         old_memory = self.function_memory
+        evaluated_args = [call_arg.accept(self) for call_arg in node.args]
         self.function_memory = MemoryStack()
         self.function_memory.push(Memory("function"))
         fun_def = self.fun_defs.get(node.name.name)
-        for call_arg, fun_arg in zip(node.args, fun_def.args):
-            self.function_memory.insert(fun_arg.name.name, call_arg.accept(self))
+        for call_arg, fun_arg in zip(evaluated_args, fun_def.args):
+            self.function_memory.insert(fun_arg.name.name, call_arg)
         try:
             fun_def.body.accept(self)
             # for decl in node.body.declarations:
@@ -200,7 +200,6 @@ class Interpreter(object):
     @when(AST.Argument)
     def visit(self, node):
         return node.name.name
-
 
     @when(AST.FunctionDef)
     def visit(self, node):
