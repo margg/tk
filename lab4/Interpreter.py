@@ -1,9 +1,8 @@
-
 import AST
 import SymbolTable
-from lab4.Memory import *
-from lab4.Exceptions import *
-from lab4.visit import *
+from Memory import *
+from Exceptions import *
+from visit import *
 
 import sys
 
@@ -11,6 +10,17 @@ sys.setrecursionlimit(10000)
 
 
 class Interpreter(object):
+    def __init__(self):
+        self.fun_defs = SymbolTable.SymbolTable(None, "FunctionDefs")
+        self.global_memory = MemoryStack()
+        self.function_memory = None
+        self.binary_ops = {
+            "+": (lambda a, b: a + b),
+            "-": (lambda a, b: a - b),
+            "*": (lambda a, b: a * b),
+            "/": (lambda a, b: a / b),
+            "%": (lambda a, b: a % b),
+        }
 
     @on('node')
     def visit(self, node):
@@ -18,10 +28,11 @@ class Interpreter(object):
 
     @when(AST.Program)
     def visit(self, node):
-        self.global_memory = MemoryStack()
-        self.function_memory = None
-        for instr in node.body:
-            instr.accept(self)
+        try:
+            for instr in node.body:
+                instr.accept(self)
+        except ReturnValueException as e:
+            return e.value
 
     @when(AST.Name)
     def visit(self, node):
@@ -53,9 +64,9 @@ class Interpreter(object):
         else:
             self.global_memory.insert(name, value)
 
-    @when(AST.Instruction)
-    def visit(self, node):
-        node.accept(self)
+    # @when(AST.Instruction)
+    # def visit(self, node):
+    #     node.accept(self)
 
     @when(AST.PrintInstr)
     def visit(self, node):
@@ -111,57 +122,59 @@ class Interpreter(object):
 
     @when(AST.ReturnInstr)
     def visit(self, node):
-        pass
+        raise ReturnValueException(node.expression.accept(self))
 
     @when(AST.ContinueInstr)
     def visit(self, node):
-        pass
+        raise ContinueException
 
     @when(AST.BreakInstr)
     def visit(self, node):
-        raise BreakException()
+        raise BreakException
 
     @when(AST.CompoundInstr)
     def visit(self, node):
-        pass
-
-
-    @when(AST.BinaryExpr)
-    def visit(self, node):
-        r1 = node.left.accept(self)
-        r2 = node.right.accept(self)
-
-        # try sth smarter than:
-        # if(node.op=='+') return r1+r2
-        # elsif(node.op=='-') ...
-        # but do not use python eval
+        # check other exceptions if something is wrong
+        for decl in node.declarations:
+            decl.accept(self)
+        for instr in node.instructions:
+            instr.accept(self)
 
     @when(AST.Const)
     def visit(self, node):
         return node.value
 
+    @when(AST.BinaryExpr)
+    def visit(self, node):
+        r1 = node.left.accept(self)
+        r2 = node.right.accept(self)
+        return self.binary_ops[node.op.accept(self)](r1, r2)
+
     @when(AST.MethodCallExpr)
     def visit(self, node):
         old_memory = self.function_memory
         self.function_memory = MemoryStack()
-
-        # szukamy w "symbol table" odniesienia do FunctionDef dla tej funkcji
-        # wywolujemy z parametrami. - wrzucamy do function_memory
-        # fundef.args - zip - parameters
-
+        fun_def = self.fun_defs.get(node.name)
+        for call_arg, fun_arg in zip(node.args, fun_def.args):
+            self.function_memory.insert(fun_arg.accept(self), call_arg.accept(self))
         try:
-            pass
-        except ReturnValueException:
+            node.body.accept(self)
+            # for decl in node.body.declarations:
+            #     decl.accept(self)
+            # for instr in node.body.instructions:
+            #     instr.accept(self)
+        except ReturnValueException as e:
             self.function_memory = old_memory
-            # ...
+            return e.value
+
+    @when(AST.Argument)
+    def visit(self, node):
+        return node.name
+
 
     @when(AST.FunctionDef)
     def visit(self, node):
-        # symbol table?
-        # lista definicji funkcji  - zapisujemy w nich node
-        pass
-
-
+        self.fun_defs.put(node.name, node)
 
 
 
