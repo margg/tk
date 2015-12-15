@@ -20,6 +20,7 @@ class MemoryStack:
             self.push(memory)
 
     def get(self, name):  # gets from memory stack current value of variable <name>
+        # todo: reverse order
         for memory in self.stack:
             if memory.has_key(name):
                 return memory.get(name)

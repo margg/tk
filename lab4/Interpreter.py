@@ -45,7 +45,7 @@ class Interpreter(object):
     def visit(self, node):
         if self.function_memory:
             ret = self.function_memory.get(node.name)
-            if ret:
+            if ret is not None:
                 return ret
         return self.global_memory.get(node.name)
 
@@ -53,17 +53,13 @@ class Interpreter(object):
     def visit(self, node):
         if self.function_memory:
             ret = self.function_memory.get(node.name)
-            if ret:
+            if ret is not None:
                 return ret
         return self.global_memory.get(node.name)
 
     @when(AST.Operator)
     def visit(self, node):
         return node.op
-
-    @when(AST.CheckedName)
-    def visit(self, node):
-        return node.name
 
     @when(AST.Declaration)
     def visit(self, node):
@@ -72,7 +68,7 @@ class Interpreter(object):
 
     @when(AST.Initializer)
     def visit(self, node):
-        name = node.name.accept(self)
+        name = node.name.name
         value = node.expression.accept(self)
         if self.function_memory:
             self.function_memory.insert(name, value)
@@ -94,7 +90,7 @@ class Interpreter(object):
 
     @when(AST.Assignment)
     def visit(self, node):
-        target = node.target.accept(self)
+        target = node.target.name
         value = node.value.accept(self)
         if self.function_memory:
             self.function_memory.insert(target, value)
@@ -129,7 +125,8 @@ class Interpreter(object):
                 instr.accept(self)
             while not node.condition.accept(self):
                 try:
-                    r = node.body.accept(self)
+                    for instr in node.body:
+                        instr.accept(self)
                 except ContinueException:
                     continue
             return r
@@ -168,6 +165,14 @@ class Interpreter(object):
     def visit(self, node):
         return node.value
 
+    @when(AST.Integer)
+    def visit(self, node):
+        return int(node.value)
+
+    @when(AST.Float)
+    def visit(self, node):
+        return float(node.value)
+
     @when(AST.BinaryExpr)
     def visit(self, node):
         r1 = node.left.accept(self)
@@ -179,9 +184,9 @@ class Interpreter(object):
         old_memory = self.function_memory
         self.function_memory = MemoryStack()
         self.function_memory.push(Memory("function"))
-        fun_def = self.fun_defs.get(node.name.accept(self))
+        fun_def = self.fun_defs.get(node.name.name)
         for call_arg, fun_arg in zip(node.args, fun_def.args):
-            self.function_memory.insert(fun_arg.accept(self), call_arg.accept(self))
+            self.function_memory.insert(fun_arg.name.name, call_arg.accept(self))
         try:
             fun_def.body.accept(self)
             # for decl in node.body.declarations:
@@ -194,12 +199,12 @@ class Interpreter(object):
 
     @when(AST.Argument)
     def visit(self, node):
-        return node.name
+        return node.name.name
 
 
     @when(AST.FunctionDef)
     def visit(self, node):
-        self.fun_defs.put(node.name.accept(self), node)
+        self.fun_defs.put(node.name.name, node)
 
 
 
