@@ -116,8 +116,11 @@ class Interpreter(object):
     @when(AST.RepeatInstr)
     def visit(self, node):
         try:
-            for instr in node.body:
-                instr.accept(self)
+            try:
+                for instr in node.body:
+                    instr.accept(self)
+            except ContinueException:
+                pass
             while not node.condition.accept(self):
                 try:
                     for instr in node.body:
@@ -198,8 +201,9 @@ class Interpreter(object):
                 instr.accept(self)
 
         except ReturnValueException as e:
-            self.function_memory = old_memory
             return e.value
+        finally:
+            self.function_memory = old_memory
 
     @when(AST.Argument)
     def visit(self, node):
