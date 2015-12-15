@@ -84,8 +84,7 @@ class Interpreter(object):
     @when(AST.PrintInstr)
     def visit(self, node):
         for expression in node.expr_list:
-            a = expression.accept(self)
-            print a
+            print(expression.accept(self))
 
     @when(AST.LabeledInstr)
     def visit(self, node):
@@ -112,7 +111,7 @@ class Interpreter(object):
         try:
             while node.condition.accept(self):
                 try:
-                    node.body.accept(self)
+                    self.visit_list(node.body)
                 except ContinueException:
                     continue
         except BreakException:
@@ -189,10 +188,6 @@ class Interpreter(object):
             self.function_memory.insert(fun_arg.name.name, call_arg)
         try:
             fun_def.body.accept(self)
-            # for decl in node.body.declarations:
-            #     decl.accept(self)
-            # for instr in node.body.instructions:
-            #     instr.accept(self)
         except ReturnValueException as e:
             self.function_memory = old_memory
             return e.value

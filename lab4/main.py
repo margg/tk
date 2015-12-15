@@ -44,6 +44,7 @@ def test_file(test_dir, filename):
 if __name__ == '__main__':
 
     test_dir = "tests"
+    # test_dir = "run_test"
 
     test_in = []
     for dirpath, dirnames, filenames in os.walk(test_dir):
