@@ -80,7 +80,7 @@ class Interpreter(object):
     @when(AST.PrintInstr)
     def visit(self, node):
         for expression in node.expr_list:
-            print(expression.accept(self))
+            print expression.accept(self)
 
     @when(AST.LabeledInstr)
     def visit(self, node):
@@ -99,7 +99,7 @@ class Interpreter(object):
     def visit(self, node):
         if node.condition.accept(self):
             node.body.accept(self)
-        else:
+        elif node.else_body:
             node.else_body.accept(self)
 
     @when(AST.WhileInstr)
@@ -107,8 +107,7 @@ class Interpreter(object):
         try:
             while node.condition.accept(self):
                 try:
-                    for instr in node.body:
-                        instr.accept(self)
+                    node.body.accept(self)
                 except ContinueException:
                     continue
         except BreakException:
@@ -167,6 +166,10 @@ class Interpreter(object):
     @when(AST.Float)
     def visit(self, node):
         return float(node.value)
+
+    @when(AST.String)
+    def visit(self, node):
+        return node.value[1:-1]
 
     @when(AST.BinaryExpr)
     def visit(self, node):
