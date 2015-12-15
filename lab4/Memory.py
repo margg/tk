@@ -20,6 +20,7 @@ class MemoryStack:
             self.push(memory)
 
     def get(self, name):  # gets from memory stack current value of variable <name>
+        # todo: reverse order
         for memory in self.stack:
             if memory.has_key(name):
                 return memory.get(name)
@@ -36,4 +37,4 @@ class MemoryStack:
         self.stack.append(memory)
 
     def pop(self):  # pops the top memory from the stack
-        return self.pop()
+        return self.stack.pop()
