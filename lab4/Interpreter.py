@@ -77,10 +77,6 @@ class Interpreter(object):
         else:
             self.global_memory.insert(name, value)
 
-    # @when(AST.Instruction)
-    # def visit(self, node):
-    #     node.accept(self)
-
     @when(AST.PrintInstr)
     def visit(self, node):
         for expression in node.expr_list:
@@ -111,7 +107,8 @@ class Interpreter(object):
         try:
             while node.condition.accept(self):
                 try:
-                    self.visit_list(node.body)
+                    for instr in node.body:
+                        instr.accept(self)
                 except ContinueException:
                     continue
         except BreakException:
