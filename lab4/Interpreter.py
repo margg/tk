@@ -84,16 +84,16 @@ class Interpreter(object):
 
     @when(AST.LabeledInstr)
     def visit(self, node):
-        pass
+        node.instruction.accept(self)
 
     @when(AST.Assignment)
     def visit(self, node):
         target = node.target.name
         value = node.value.accept(self)
         if self.function_memory:
-            self.function_memory.set(target, value)
-        else:
-            self.global_memory.set(target, value)
+            if self.function_memory.set(target, value):
+                return
+        self.global_memory.set(target, value)
 
     @when(AST.IfInstr)
     def visit(self, node):
