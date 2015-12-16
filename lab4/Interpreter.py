@@ -5,6 +5,7 @@ from Exceptions import *
 from visit import *
 
 import sys
+import operator
 
 sys.setrecursionlimit(10000)
 
@@ -16,19 +17,19 @@ class Interpreter(object):
         self.global_memory.push(Memory("global"))
         self.function_memory = None
         self.binary_ops = {
-            "+": (lambda a, b: a + b),
-            "-": (lambda a, b: a - b),
-            "*": (lambda a, b: a * b),
-            "/": (lambda a, b: a / b),
-            "%": (lambda a, b: a % b),
-            "==": (lambda a, b: a == b),
-            "<=": (lambda a, b: a <= b),
-            ">=": (lambda a, b: a >= b),
-            ">": (lambda a, b: a > b),
-            "<": (lambda a, b: a < b),
-            "!=": (lambda a, b: a != b),
-            "||": (lambda a, b: a or b),
-            "&&": (lambda a, b: a and b),
+            "+": operator.add,
+            "-": operator.sub,
+            "*": operator.mul,
+            "/": operator.div,
+            "%": operator.mod,
+            "==": operator.eq,
+            "<=": operator.le,
+            ">=": operator.ge,
+            ">": operator.gt,
+            "<": operator.lt,
+            "!=": operator.ne,
+            "||": operator.or_,
+            "&&": operator.and_,
         }
 
     @on('node')
@@ -80,7 +81,7 @@ class Interpreter(object):
     @when(AST.PrintInstr)
     def visit(self, node):
         for expression in node.expr_list:
-            print expression.accept(self)
+            print(expression.accept(self))
 
     @when(AST.LabeledInstr)
     def visit(self, node):
