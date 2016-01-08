@@ -1,7 +1,18 @@
 # IntelliJ files
 .idea/
 *.iml
+
+# MacOS
 .DS_STORE
+
+# task specific
 parser.out
 parsetab.py
+
+# Python files
 *.pyc
+
+# Scala files
+target/
+*.class
+
