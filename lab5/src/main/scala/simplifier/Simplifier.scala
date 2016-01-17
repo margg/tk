@@ -39,21 +39,31 @@ object Simplifier {
       }
 
     // simplify expressions
-    case BinExpr("+", left, right) => (simplify(left), simplify(right)) match {
-      case (a, IntNum(b)) if b == 0 => a
-      case (IntNum(a), b) if a == 0 => b
-      case (Unary("-", Variable(a)), Variable(b)) =>
-        simplify(BinExpr("-", Variable(b), Variable(a)))
-      case (a, b) => BinExpr("+", simplify(a), simplify(b))
-    }
-
-    case BinExpr("-", left, right) => (simplify(left), simplify(right)) match {
-      case (IntNum(a), IntNum(b)) if a == b => IntNum(0)
-      case (a, b) => BinExpr("+", simplify(a), simplify(b))
-    }
-
+    // todo: divide into smaller and cleaner match cases
     case BinExpr(op, left, right) => (op, simplify(left), simplify(right)) match {
-      case (_, a, b) => BinExpr(op, a, b)
+      case ("+", a, IntNum(b)) if b == 0 => a
+      case ("+", IntNum(a), b) if a == 0 => b
+      case ("+", Unary("-", Variable(a)), Variable(b))=>
+        simplify(BinExpr("-", Variable(b), Variable(a)))
+      case ("*", Variable(x), IntNum(b)) if b == 1 => Variable(x)
+      case ("*", IntNum(a), Variable(x)) if a == 1 => Variable(x)
+      case ("*", Variable(x), IntNum(b)) if b == 0 => IntNum(0)
+      case ("*", IntNum(a), Variable(x)) if a == 0 => IntNum(0)
+      case ("-", IntNum(a), IntNum(b)) if a == b => IntNum(0)
+      case ("-", Variable(a), Variable(b)) if a == b => IntNum(0)
+      case ("or", a, b) if a == b => a
+      case ("or", Variable(x), TrueConst()) => TrueConst()
+      case ("or", Variable(x), FalseConst()) => Variable(x)
+      case ("and", a, b) if a == b => a
+      case ("and", Variable(x), FalseConst()) => FalseConst()
+      case ("and", Variable(x), TrueConst()) => Variable(x)
+      case ("==", Variable(a), Variable(b)) if a == b => TrueConst()
+      case (">=", Variable(a), Variable(b)) if a == b => TrueConst()
+      case ("<=", Variable(a), Variable(b)) if a == b => TrueConst()
+      case ("!=", Variable(a), Variable(b)) if a == b => FalseConst()
+      case ("<", Variable(a), Variable(b)) if a == b => FalseConst()
+      case (">", Variable(a), Variable(b)) if a == b => FalseConst()
+      case (_, a, b) => BinExpr(op, simplify(a), simplify(b))
     }
 
     // cancel double unary ops & get rid of not before comparisons
