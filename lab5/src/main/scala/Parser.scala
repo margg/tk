@@ -126,6 +126,7 @@ class Parser extends JavaTokenParsers {
       | primary
     )
 
+  def tuple_list: Parser[Node] = (primary <~ opt(",")).* ^^ Tuple
 
   def primary: Parser[Node] = (
     lvalue
@@ -135,9 +136,9 @@ class Parser extends JavaTokenParsers {
       case NodeList(x) => ElemList(x)
       case l => { println("Warn: expr_list_comma for list didn't return NodeList"); l }
     }
-      | "("~>expr_list_comma<~")" ^^ {
-      case NodeList(x) => ElemList(x)
-      case l => { println("Warn: expr_list_comma for tuple didn't return NodeList"); l }
+      | "("~>tuple_list<~")" ^^ {
+      case Tuple(x) => Tuple(x)
+      case l => { println("Warn: tuple_list for tuple didn't return NodeList"); l }
     }
       | "{"~>key_datum_list<~"}"
     )
