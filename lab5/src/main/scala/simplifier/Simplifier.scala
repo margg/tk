@@ -12,6 +12,9 @@ object Simplifier {
     // recognize tuples: (x,y)+(u,v) => (x, y, u, v)
     case BinExpr("+", Tuple(a), Tuple(b)) => Tuple((a ++ b) map simplify)
 
+    // concatenate lists
+    case BinExpr("+", ElemList(a), ElemList(b)) => ElemList((a ++ b) map simplify)
+
     // simplify if-else instruction with known condition
     case IfElseInstr(cond, left, right) =>
       val cond_simplified = simplify(cond)
@@ -37,6 +40,12 @@ object Simplifier {
         case FalseConst() => NodeList(List())
         case _ => WhileInstr(cond_simplified, simplify(body))
       }
+
+    // remove no effect instructions
+    case Assignment(left, right) => (left, right) match {
+      case (Variable(a), Variable(b)) if a == b => NodeList(List())
+      case (_, _) => Assignment(simplify(left), simplify(right))
+    }
 
     // simplify expressions
     // todo: divide into smaller and cleaner match cases
