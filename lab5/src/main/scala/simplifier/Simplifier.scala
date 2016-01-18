@@ -99,7 +99,7 @@ object Simplifier {
       case ("==", FloatNum(a), FloatNum(b)) => if (a == b) TrueConst() else FalseConst()
       case ("!=", FloatNum(a), FloatNum(b)) => if (a != b) TrueConst() else FalseConst()
 
-      // simplifying division
+      // simplify division
       case ("/", Variable(a), Variable(b)) if a == b => IntNum(1)
       case ("/", BinExpr(oper, a, b), BinExpr(oper2, a2, b2))
         if (oper == oper2) && (((a == a2) && (b == b2))
@@ -109,10 +109,9 @@ object Simplifier {
       case ("*", BinExpr("/", IntNum(a), expr2), expr) if a == 1 => BinExpr("/", expr, expr2)
 
       // understand distributive property of multiplication
-      case ("+", BinExpr("+", BinExpr("*", Variable(a), BinExpr("+", Variable(b), Variable(d))),
-        BinExpr("*", Variable(c), Variable(b2))), BinExpr("*", Variable(c2), Variable(d2)))
+      case ("+", BinExpr("+", BinExpr("*", a, BinExpr("+", b, d)), BinExpr("*", c, b2)), BinExpr("*", c2, d2))
         if b == b2 && c == c2 && d == d2 =>
-          BinExpr("*", BinExpr("+", Variable(a), Variable(c)), BinExpr("+", Variable(b), Variable(d)))
+          BinExpr("*", BinExpr("+", a, c), BinExpr("+", b, d))
 
       case (oper, BinExpr("*", a, b), BinExpr("*", c, d)) if oper == "+" || oper == "-" =>
         (a, b, c, d) match {
