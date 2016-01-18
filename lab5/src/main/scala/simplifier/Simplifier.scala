@@ -109,10 +109,10 @@ object Simplifier {
       case ("*", BinExpr("/", IntNum(a), expr2), expr) if a == 1 => BinExpr("/", expr, expr2)
 
       // understand distributive property of multiplication
-      case ("+", BinExpr("+", BinExpr("*", Variable(x), BinExpr("+", Variable(y), Variable(z))),
-        BinExpr("*", Variable(v), Variable(y2))), BinExpr("*", Variable(v2), Variable(z2)))
-        if y == y2 && v == v2 && z == z2 =>
-          BinExpr("*", BinExpr("+", Variable(x), Variable(v)), BinExpr("+", Variable(y), Variable(z)))
+      case ("+", BinExpr("+", BinExpr("*", Variable(a), BinExpr("+", Variable(b), Variable(d))),
+        BinExpr("*", Variable(c), Variable(b2))), BinExpr("*", Variable(c2), Variable(d2)))
+        if b == b2 && c == c2 && d == d2 =>
+          BinExpr("*", BinExpr("+", Variable(a), Variable(c)), BinExpr("+", Variable(b), Variable(d)))
 
       case (oper, BinExpr("*", a, b), BinExpr("*", c, d)) if oper == "+" || oper == "-" =>
         (a, b, c, d) match {
