@@ -121,12 +121,23 @@ class parserSpec extends Specification {
 
     "understand commutativity" in {
       parseString("x+5-x") mustEqual parseString("5")
+      parseString("x-5-x") mustEqual parseString("-5")
+      parseString("5-x+x") mustEqual parseString("5")
+      parseString("5+x-x") mustEqual parseString("5")
+      parseString("-x+5+x") mustEqual parseString("5")
+      parseString("-x-5+x") mustEqual parseString("-5")
       parseString("(a or b) and (b or a)") mustEqual parseString("a or b")
+      parseString("(a or b) and (b or a) and (a or b)") mustEqual parseString("a or b")
       parseString("(a and b) or (b and a)") mustEqual parseString("a and b")
+      parseString("(a and b) or (b and a) or (a and b)") mustEqual parseString("a and b")
+      parseString("((a or b) and (c and d)) or ((c and d) and (a or b))") mustEqual parseString("(a or b) and (c and d)")
     }
 
     "understand distributive property of multiplication" in {
       parseString("2*x-x") mustEqual parseString("x")
+      parseString("5*x-3*x") mustEqual parseString("2*x")
+      parseString("5*x+x*3") mustEqual parseString("8*x")
+      parseString("5*x+x*3+2*x") mustEqual parseString("10*x")
       parseString("x*z+y*z") mustEqual parseString("(x+y)*z")
       parseString("x*y+x*z") mustEqual parseString("x*(y+z)")
       parseString("x*y+x*z+v*y+v*z") mustEqual parseString("(x+v)*(y+z)")

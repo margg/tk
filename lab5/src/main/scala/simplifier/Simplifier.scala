@@ -108,6 +108,19 @@ object Simplifier {
       case ("*", expr, BinExpr("/", IntNum(a), expr2)) if a == 1 => BinExpr("/", expr, expr2)
       case ("*", BinExpr("/", IntNum(a), expr2), expr) if a == 1 => BinExpr("/", expr, expr2)
 
+      // understand commutativity
+      case ("and", BinExpr("or", a1, b1), BinExpr("or", a2, b2)) if (a1 == a2 && b1 == b2) || (a1 == b2 && b1 == a2) =>
+        BinExpr("or", a1, b1)
+      case ("or", BinExpr("and", a1, b1), BinExpr("and", a2, b2)) if (a1 == a2 && b1 == b2) || (a1 == b2 && b1 == a2) =>
+        BinExpr("and", a1, b1)
+
+      case ("-", BinExpr("+", Variable(a), expr), Variable(a1)) if a == a1 => expr // a+expr-a1
+      case ("-", BinExpr("-", Variable(a), expr), Variable(a1)) if a == a1 => simplify(Unary("-", expr)) // a-expr-a1
+      case ("-", BinExpr("+", expr, Variable(a)), Variable(a1)) if a == a1 => expr // expr+a-a1
+      case ("+", BinExpr("-", expr, Variable(a)), Variable(a1)) if a == a1 => expr // expr-a+a1
+      case ("+", BinExpr("+", Unary("-", Variable(a)), expr), Variable(a1)) if a == a1 => expr // -a + expr + a1
+      case ("+", BinExpr("-", Unary("-", Variable(a)), expr), Variable(a1)) if a == a1 => simplify(Unary("-", expr)) // -a + expr + a1
+
       // understand distributive property of multiplication
       case ("+", BinExpr("+", BinExpr("*", a, BinExpr("+", b, d)), BinExpr("*", c, b2)), BinExpr("*", c2, d2))
         if b == b2 && c == c2 && d == d2 =>
