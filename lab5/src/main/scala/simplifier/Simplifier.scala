@@ -98,6 +98,15 @@ object Simplifier {
       case ("==", FloatNum(a), FloatNum(b)) => if (a == b) TrueConst() else FalseConst()
       case ("!=", FloatNum(a), FloatNum(b)) => if (a != b) TrueConst() else FalseConst()
 
+      // simplifying division
+      case ("/", Variable(a), Variable(b)) if a == b => IntNum(1)
+      case ("/", BinExpr(oper, a, b), BinExpr(oper2, a2, b2))
+        if (oper == oper2) && (((a == a2) && (b == b2))
+          || (List("+", "*").contains(oper) && (a == b2) && (b == a2))) => IntNum(1)
+      case ("/", IntNum(a), BinExpr("/", IntNum(b), expr)) if a == 1 && b == 1 => expr    // simplify(expr)?
+      case ("*", expr, BinExpr("/", IntNum(a), expr2)) if a == 1 => BinExpr("/", expr, expr2)
+      case ("*", BinExpr("/", IntNum(a), expr2), expr) if a == 1 => BinExpr("/", expr, expr2)
+
       case (_, a, b) => BinExpr(op, simplify(a), simplify(b))
     }
 

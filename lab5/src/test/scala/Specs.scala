@@ -93,6 +93,7 @@ class parserSpec extends Specification {
       parseString("1/(1/x)") mustEqual parseString("x")
       parseString("1/(1/(x-z))") mustEqual parseString("x-z")
       parseString("x*(1/y)") mustEqual parseString("x/y")
+      parseString("(1/y)*x") mustEqual parseString("x/y")
     }
 
     "simplify expressions" in {
