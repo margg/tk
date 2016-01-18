@@ -72,24 +72,46 @@ object Simplifier {
       case ("!=", Variable(a), Variable(b)) if a == b => FalseConst()
       case ("<", Variable(a), Variable(b)) if a == b => FalseConst()
       case (">", Variable(a), Variable(b)) if a == b => FalseConst()
+
+      // integers
+      case ("+", IntNum(a), IntNum(b)) => IntNum(a + b)
+      case ("-", IntNum(a), IntNum(b)) => IntNum(a - b)
+      case ("*", IntNum(a), IntNum(b)) => IntNum(a * b)
+      case ("/", IntNum(a), IntNum(b)) => IntNum(a / b)
+      case ("**", IntNum(a), IntNum(b)) => IntNum(a ^ b)
+      case ("<", IntNum(a), IntNum(b)) => if (a < b) TrueConst() else FalseConst()
+      case ("<=", IntNum(a), IntNum(b)) => if (a <= b) TrueConst() else FalseConst()
+      case (">", IntNum(a), IntNum(b)) => if (a > b) TrueConst() else FalseConst()
+      case (">=", IntNum(a), IntNum(b)) => if (a >= b) TrueConst() else FalseConst()
+      case ("==", IntNum(a), IntNum(b)) => if (a == b) TrueConst() else FalseConst()
+      case ("!=", IntNum(a), IntNum(b)) => if (a != b) TrueConst() else FalseConst()
+
+      // floats
+      case ("+", FloatNum(a), FloatNum(b)) => FloatNum(a + b)
+      case ("-", FloatNum(a), FloatNum(b)) => FloatNum(a - b)
+      case ("*", FloatNum(a), FloatNum(b)) => FloatNum(a * b)
+      case ("/", FloatNum(a), FloatNum(b)) => FloatNum(a / b)
+      case ("<", FloatNum(a), FloatNum(b)) => if (a < b) TrueConst() else FalseConst()
+      case ("<=", FloatNum(a), FloatNum(b)) => if (a <= b) TrueConst() else FalseConst()
+      case (">", FloatNum(a), FloatNum(b)) => if (a > b) TrueConst() else FalseConst()
+      case (">=", FloatNum(a), FloatNum(b)) => if (a >= b) TrueConst() else FalseConst()
+      case ("==", FloatNum(a), FloatNum(b)) => if (a == b) TrueConst() else FalseConst()
+      case ("!=", FloatNum(a), FloatNum(b)) => if (a != b) TrueConst() else FalseConst()
+
       case (_, a, b) => BinExpr(op, simplify(a), simplify(b))
     }
 
     // cancel double unary ops & get rid of not before comparisons
     case Unary(op, expr) => (op, simplify(expr)) match {
+      case ("not", TrueConst()) => FalseConst()
+      case ("not", FalseConst()) => TrueConst()
       case ("not", Unary("not", expr1)) => simplify(expr1)
-      case ("not", BinExpr("==", left, right)) =>
-        simplify(BinExpr("!=", left, right))
-      case ("not", BinExpr("!=", left, right)) =>
-        simplify(BinExpr("==", left, right))
-      case ("not", BinExpr(">", left, right)) =>
-        simplify(BinExpr("<=", left, right))
-      case ("not", BinExpr("<", left, right)) =>
-        simplify(BinExpr(">=", left, right))
-      case ("not", BinExpr(">=", left, right)) =>
-        simplify(BinExpr("<", left, right))
-      case ("not", BinExpr("<=", left, right)) =>
-        simplify(BinExpr(">", left, right))
+      case ("not", BinExpr("==", left, right)) => simplify(BinExpr("!=", left, right))
+      case ("not", BinExpr("!=", left, right)) => simplify(BinExpr("==", left, right))
+      case ("not", BinExpr(">", left, right)) => simplify(BinExpr("<=", left, right))
+      case ("not", BinExpr("<", left, right)) => simplify(BinExpr(">=", left, right))
+      case ("not", BinExpr(">=", left, right)) => simplify(BinExpr("<", left, right))
+      case ("not", BinExpr("<=", left, right)) => simplify(BinExpr(">", left, right))
       case ("-", Unary("-", expr1)) => simplify(expr1)
       case (_, expr1) => Unary(op, simplify(expr1))
     }
