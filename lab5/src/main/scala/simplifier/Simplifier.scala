@@ -51,6 +51,8 @@ object Simplifier {
     // simplify expressions
     // todo: divide into smaller and cleaner match cases
     case BinExpr(op, left, right) => (op, simplify(left), simplify(right)) match {
+
+      // simplify expressions
       case ("+", a, IntNum(b)) if b == 0 => a
       case ("+", IntNum(a), b) if a == 0 => b
       case ("+", Unary("-", Variable(a)), Variable(b)) =>
@@ -74,12 +76,20 @@ object Simplifier {
       case ("<", Variable(a), Variable(b)) if a == b => FalseConst()
       case (">", Variable(a), Variable(b)) if a == b => FalseConst()
 
+      // recognize power laws
+      case ("*", BinExpr("**", a1, b1), BinExpr("**", a2, b2)) if a1 == a2 =>
+        BinExpr("**", a1, BinExpr("+", b1, b2))
+      case ("**", BinExpr("**", a, b), c) => BinExpr("**", a, BinExpr("*", b, c))
+      case ("**", a, IntNum(n)) if n == 0 => IntNum(1)
+      case ("**", a, IntNum(n)) if n == 1 => a
+
+      // evaluate constants
       // integers
       case ("+", IntNum(a), IntNum(b)) => IntNum(a + b)
       case ("-", IntNum(a), IntNum(b)) => IntNum(a - b)
       case ("*", IntNum(a), IntNum(b)) => IntNum(a * b)
       case ("/", IntNum(a), IntNum(b)) => IntNum(a / b)
-      case ("**", IntNum(a), IntNum(b)) => IntNum(a ^ b)
+      case ("**", IntNum(a), IntNum(b)) => IntNum(scala.math.pow(a.intValue(), b.intValue()).toInt)
       case ("<", IntNum(a), IntNum(b)) => if (a < b) TrueConst() else FalseConst()
       case ("<=", IntNum(a), IntNum(b)) => if (a <= b) TrueConst() else FalseConst()
       case (">", IntNum(a), IntNum(b)) => if (a > b) TrueConst() else FalseConst()
@@ -156,7 +166,6 @@ object Simplifier {
             simplify(BinExpr("*", BinExpr(oper, expr_, IntNum(1)), Variable(a_)))
           case (c_, d_, a_) => BinExpr(oper, simplify(BinExpr("*", c_, d_)), Variable(a_))
         }
-
 
       case (_, a, b) => BinExpr(op, simplify(a), simplify(b))
     }
