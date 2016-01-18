@@ -131,10 +131,10 @@ object Simplifier {
       case list => {
         // remove dead assignments
         val buffer = ListBuffer.empty[Node]
-        list.sliding(2).foreach(l => (l(0), l(1)) match {
+        list.sliding(2).foreach(l => (simplify(l(0)), simplify(l(1))) match {
           case (Assignment(a1, b1), Assignment(a2, b2))
-            if a1 == a2 => buffer.+=(Assignment(a2, b2))
-          case (a, b) => buffer.++(List(a, b) map simplify)
+            if a1 == a2 && b2 != a2 => buffer += Assignment(a2, b2)
+          case (a, b) => buffer ++ (List(a, b) map simplify)
         })
         NodeList(buffer.toList)
       }
