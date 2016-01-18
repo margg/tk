@@ -52,7 +52,7 @@ object Simplifier {
     case BinExpr(op, left, right) => (op, simplify(left), simplify(right)) match {
       case ("+", a, IntNum(b)) if b == 0 => a
       case ("+", IntNum(a), b) if a == 0 => b
-      case ("+", Unary("-", Variable(a)), Variable(b))=>
+      case ("+", Unary("-", Variable(a)), Variable(b)) =>
         simplify(BinExpr("-", Variable(b), Variable(a)))
       case ("*", Variable(x), IntNum(b)) if b == 1 => Variable(x)
       case ("*", IntNum(a), Variable(x)) if a == 1 => Variable(x)
@@ -103,9 +103,47 @@ object Simplifier {
       case ("/", BinExpr(oper, a, b), BinExpr(oper2, a2, b2))
         if (oper == oper2) && (((a == a2) && (b == b2))
           || (List("+", "*").contains(oper) && (a == b2) && (b == a2))) => IntNum(1)
-      case ("/", IntNum(a), BinExpr("/", IntNum(b), expr)) if a == 1 && b == 1 => expr    // simplify(expr)?
+      case ("/", IntNum(a), BinExpr("/", IntNum(b), expr)) if a == 1 && b == 1 => expr
       case ("*", expr, BinExpr("/", IntNum(a), expr2)) if a == 1 => BinExpr("/", expr, expr2)
       case ("*", BinExpr("/", IntNum(a), expr2), expr) if a == 1 => BinExpr("/", expr, expr2)
+
+      // understand distributive property of multiplication
+      case ("+", BinExpr("+", BinExpr("*", Variable(x), BinExpr("+", Variable(y), Variable(z))),
+        BinExpr("*", Variable(v), Variable(y2))), BinExpr("*", Variable(v2), Variable(z2)))
+        if y == y2 && v == v2 && z == z2 =>
+          BinExpr("*", BinExpr("+", Variable(x), Variable(v)), BinExpr("+", Variable(y), Variable(z)))
+
+      case (oper, BinExpr("*", a, b), BinExpr("*", c, d)) if oper == "+" || oper == "-" =>
+        (a, b, c, d) match {
+          case (expr_, Variable(b_), expr2_, Variable(d_)) if b_ == d_ =>
+            simplify(BinExpr("*", simplify(BinExpr(oper, expr_, expr2_)), Variable(b_)))
+          case (expr_, Variable(b_), Variable(c_), expr2_) if b_ == c_ =>
+            simplify(BinExpr("*", simplify(BinExpr(oper, expr_, expr2_)), Variable(b_)))
+          case (Variable(a_), expr_, expr2_, Variable(d_)) if a_ == d_ =>
+            simplify(BinExpr("*", Variable(a_), simplify(BinExpr(oper, expr_, expr2_))))
+          case (Variable(a_), expr_, Variable(c_), expr2_) if a_ == c_ =>
+            simplify(BinExpr("*", Variable(a_), simplify(BinExpr(oper, expr_, expr2_))))
+          case (a_, b_, c_, d_) => BinExpr(oper, simplify(BinExpr("*", a_, b_)), simplify(BinExpr("*", c_, d_)))
+        }
+
+      case (oper, Variable(a), BinExpr("*", c, d)) if oper == "+" || oper == "-" =>
+        (a, c, d) match {
+          case (a_, Variable(c_), expr_) if a_ == c_ =>
+            simplify(BinExpr("*", Variable(a_), BinExpr(oper, IntNum(1), expr_)))
+          case (a_, expr_, Variable(d_)) if a_ == d_ =>
+            simplify(BinExpr("*", Variable(a_), BinExpr(oper, IntNum(1), expr_)))
+          case (a_, c_, d_) => BinExpr(oper, Variable(a_), simplify(BinExpr("*", c_, d_)))
+        }
+
+      case (oper, BinExpr("*", c, d), Variable(a)) if oper == "+" || oper == "-" =>
+        (c, d, a) match {
+          case (Variable(c_), expr_, a_) if a_ == c_ =>
+            simplify(BinExpr("*", BinExpr(oper, expr_, IntNum(1)), Variable(a_)))
+          case (expr_, Variable(d_), a_) if a_ == d_ =>
+            simplify(BinExpr("*", BinExpr(oper, expr_, IntNum(1)), Variable(a_)))
+          case (c_, d_, a_) => BinExpr(oper, simplify(BinExpr("*", c_, d_)), Variable(a_))
+        }
+
 
       case (_, a, b) => BinExpr(op, simplify(a), simplify(b))
     }
