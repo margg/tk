@@ -1,6 +1,7 @@
 package simplifier
 
 import AST._
+import scala.collection.mutable.ListBuffer
 
 // to implement
 // avoid one huge match of cases
@@ -163,9 +164,19 @@ object Simplifier {
       case (_, expr1) => Unary(op, simplify(expr1))
     }
 
-    case NodeList(list) =>
-      val list_simplified = list map simplify
-      if (list_simplified.size == 1) list_simplified.head else NodeList(list_simplified)
+    case NodeList(list_raw) => list_raw map simplify match {
+      case list if list.size == 1 => simplify(list.head)
+      case list => {
+        // remove dead assignments
+        val buffer = ListBuffer.empty[Node]
+        list.sliding(2).foreach(l => (simplify(l(0)), simplify(l(1))) match {
+          case (Assignment(a1, b1), Assignment(a2, b2))
+            if a1 == a2 && b2 != a2 => buffer += Assignment(a2, b2)
+          case (a, b) => buffer ++ (List(a, b) map simplify)
+        })
+        NodeList(buffer.toList)
+      }
+    }
 
     // other cases that do not change nodes
     case x => x
