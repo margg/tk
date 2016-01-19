@@ -74,9 +74,20 @@ class parserSpec extends Specification {
       parseString("x**0") mustEqual parseString("1")
       parseString("x**1") mustEqual parseString("x")
       parseString("(x**n)**m") mustEqual parseString("x**(n*m)")
-//      parseString("x**2+2*x*y+y**2") mustEqual parseString("(x+y)**2")
-//      parseString("(x+y)**2-x**2-2*x*y") mustEqual parseString("y**2")
-//      parseString("(x+y)**2-(x-y)**2") mustEqual parseString("4*x*y")
+      parseString("x**2+2*x*y+y**2") mustEqual parseString("(x+y)**2")
+      parseString("x**2+2*y*x+y**2") mustEqual parseString("(x+y)**2")
+      parseString("x**2-2*y*x+y**2") mustEqual parseString("(x-y)**2")
+      parseString("x**2+y**2+2*x*y") mustEqual parseString("(x+y)**2")
+      parseString("x**2+y**2+2*y*x") mustEqual parseString("(x+y)**2")
+      parseString("x**2+y**2-2*y*x") mustEqual parseString("(x-y)**2")
+      parseString("2*x*y+x**2+y**2") mustEqual parseString("(x+y)**2")
+      parseString("2*y*x+x**2+y**2") mustEqual parseString("(x+y)**2")
+      parseString("2*x*y+y**2+x**2") mustEqual parseString("(y+x)**2")
+      parseString("(x+t)**2+2*(x+t)*(y*d)+(y*d)**2") mustEqual parseString("((x+t)+(y*d))**2")
+      parseString("(x+y)**2-x**2-2*x*y") mustEqual parseString("y**2")
+      parseString("(x+y)**2-x**2-2*y*x") mustEqual parseString("y**2")
+      parseString("(x+y)**2-(x-y)**2") mustEqual parseString("4*x*y")
+      parseString("(y+x)**2-(x-y)**2") mustEqual parseString("4*x*y")
     }
 
     "evaluate constants" in {

@@ -39,7 +39,7 @@ object Simplifier {
     case GetAttr(expr, attr) => GetAttr(simplify(expr), attr)
     case Subscription(expr, sub) => Subscription(simplify(expr), simplify(sub))
 
-    case x => x   // other cases that do not change nodes: IntNum, TrueConst, etc.
+    case x => x // other cases that do not change nodes: IntNum, TrueConst, etc.
   }
 
   def simplifyBinExpr(op: String, left: Node, right: Node): Node = (op, left, right) match {
@@ -78,6 +78,23 @@ object Simplifier {
     case ("**", BinExpr("**", a, b), c) => BinExpr("**", a, BinExpr("*", b, c))
     case ("**", a, IntNum(n)) if n == 0 => IntNum(1)
     case ("**", a, IntNum(n)) if n == 1 => a
+
+    case ("+", BinExpr(oper, BinExpr("**", a1, IntNum(n1)), BinExpr("*", BinExpr("*", IntNum(n2), a2), b1)), BinExpr("**", b2, IntNum(n3)))
+      if (n1 == 2 && n2 == 2 && n3 == 2) && ((a1 == a2 && b1 == b2) || (a1 == b1 && a2 == b2)) && (oper == "+" || oper == "-") =>
+      simplify(BinExpr("**", BinExpr(oper, a1, b2), IntNum(2)))
+    case (oper, BinExpr("+", BinExpr("**", a1, IntNum(n1)), BinExpr("**", b2, IntNum(n3))), BinExpr("*", BinExpr("*", IntNum(n2), a2), b1))
+      if (n1 == 2 && n2 == 2 && n3 == 2) && ((a1 == a2 && b1 == b2) || (a1 == b1 && a2 == b2)) && (oper == "+" || oper == "-") =>
+      simplify(BinExpr("**", BinExpr(oper, a1, b2), IntNum(2)))
+    case ("+", BinExpr("+", BinExpr("*", BinExpr("*", IntNum(n2), a2), b1), BinExpr("**", a1, IntNum(n1))), BinExpr("**", b2, IntNum(n3)))
+      if (n1 == 2 && n2 == 2 && n3 == 2) && ((a1 == a2 && b1 == b2) || (a1 == b1 && a2 == b2)) =>
+      simplify(BinExpr("**", BinExpr("+", a1, b2), IntNum(2)))
+    case ("-", BinExpr("-", BinExpr("**", BinExpr("+", a1, b1), IntNum(n1)), BinExpr("**", a2, IntNum(n2))), BinExpr("*", BinExpr("*", IntNum(n3), a3), b2))
+      if (n1 == 2 && n2 == 2 && n3 == 2) && ((a1 == a2 && a1 == a3 && b1 == b2) || (a1 == a2 && a1 == b2 && b1 == a3)) =>
+      simplify(BinExpr("**", b1, IntNum(2)))
+
+    case ("-", BinExpr("**", BinExpr("+", a1, b1), IntNum(n1)), BinExpr("**", BinExpr("-", a2, b2), IntNum(n2)))
+      if (n1 == 2 && n2 == 2) && ((a1 == a2 && b1 == b2) || (a1 == b2 && b1 == a2)) =>
+      simplify(BinExpr("*", BinExpr("*", IntNum(4), a2), b2))
 
     // evaluate constants
     // integers
@@ -166,7 +183,7 @@ object Simplifier {
     case (_, a, b) => BinExpr(op, a, b)
   }
 
-  def simplifyIfElseInstr(cond: Node, left: Node, right: Node): Node = (cond, left,right) match {
+  def simplifyIfElseInstr(cond: Node, left: Node, right: Node): Node = (cond, left, right) match {
     case (TrueConst(), l, r) => simplify(left)
     case (FalseConst(), l, r) => simplify(right)
     case _ => IfElseInstr(cond, left, right)
@@ -206,10 +223,10 @@ object Simplifier {
 
   def simplifyKeyDatumList(list: List[KeyDatum]): Node = list match {
     case _ => KeyDatumList({
-        list.foldLeft(Map.empty[Node, KeyDatum])({
-          (m, kd) => m + (kd.key -> kd)
-        }).values.toList
-      })
+      list.foldLeft(Map.empty[Node, KeyDatum])({
+        (m, kd) => m + (kd.key -> kd)
+      }).values.toList
+    })
   }
 
   def simplifyNodeList(list: List[Node]): Node = list map simplify match {
@@ -219,7 +236,7 @@ object Simplifier {
       val buffer = ListBuffer.empty[Node]
       lst.sliding(2).foreach(l => (simplify(l.head), simplify(l(1))) match {
         case (Assignment(a1, b1), Assignment(a2, b2))
-      if a1 == a2 && b2 != a2 => buffer += Assignment(a2, b2)
+          if a1 == a2 && b2 != a2 => buffer += Assignment(a2, b2)
         case (a, b) => buffer ++ (List(a, b) map simplify)
       })
       NodeList(buffer.toList)
