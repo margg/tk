@@ -185,6 +185,16 @@ object Simplifier {
       case (_, expr1) => Unary(op, simplify(expr1))
     }
 
+    // remove duplicate keys
+    case KeyDatum(key, value) => KeyDatum(simplify(key), simplify(value))
+    case KeyDatumList(list: List[KeyDatum]) => {
+      KeyDatumList({
+        list.foldLeft(Map.empty[Node, KeyDatum])({
+          (m, kd) => m + (kd.key -> kd)
+        }).values.toList
+      })
+    }
+
     case NodeList(list_raw) => list_raw map simplify match {
       case list if list.size == 1 => simplify(list.head)
       case list => {
