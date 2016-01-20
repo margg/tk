@@ -49,7 +49,7 @@ object Simplifier {
     case ("+", ElemList(a), ElemList(b)) => ElemList((a ++ b) map simplify)
 
     // simplify expressions
-    case ("+", a, IntNum(b)) if b == 0 => a
+    case ("+", a, IntNum(0)) => a
     case ("+", IntNum(a), b) if a == 0 => b
     case ("+", Unary("-", Variable(a)), Variable(b)) =>
       simplifyBinExpr("-", Variable(b), Variable(a))
@@ -96,7 +96,7 @@ object Simplifier {
       if (n1 == 2 && n2 == 2) && ((a1 == a2 && b1 == b2) || (a1 == b2 && b1 == a2)) =>
       simplify(BinExpr("*", BinExpr("*", IntNum(4), a2), b2))
 
-    // evaluate constants
+    // evaluate constants - use Trait
     // integers
     case ("+", IntNum(a), IntNum(b)) => IntNum(a + b)
     case ("-", IntNum(a), IntNum(b)) => IntNum(a - b)
@@ -149,7 +149,7 @@ object Simplifier {
       if b == b2 && c == c2 && d == d2 =>
       BinExpr("*", BinExpr("+", a, c), BinExpr("+", b, d))
 
-    case (oper, BinExpr("*", a, b), BinExpr("*", c, d)) if oper == "+" || oper == "-" =>
+    case (oper@("+"|"-"), BinExpr("*", a, b), BinExpr("*", c, d)) =>
       (a, b, c, d) match {
         case (expr_, Variable(b_), expr2_, Variable(d_)) if b_ == d_ =>
           simplify(BinExpr("*", simplify(BinExpr(oper, expr_, expr2_)), Variable(b_)))
@@ -206,7 +206,7 @@ object Simplifier {
     case (_, _) => Assignment(left, right)
   }
 
-  def simplifyUnary(op: String, expr: Node): Node = (op, expr) match {
+  def simplifyUnary(op: String, expr: Node): Node = (op, expr) match { // map
     // cancel double unary ops & get rid of not before comparisons
     case ("not", TrueConst()) => FalseConst()
     case ("not", FalseConst()) => TrueConst()
@@ -234,7 +234,7 @@ object Simplifier {
     case lst =>
       // remove dead assignments
       val buffer = ListBuffer.empty[Node]
-      lst.sliding(2).foreach(l => (simplify(l.head), simplify(l(1))) match {
+      lst.sliding(2).foreach(l => (simplify(l.head), simplify(l(1))) match { // zip
         case (Assignment(a1, b1), Assignment(a2, b2))
           if a1 == a2 && b2 != a2 => buffer += Assignment(a2, b2)
         case (a, b) => buffer ++ (List(a, b) map simplify)
